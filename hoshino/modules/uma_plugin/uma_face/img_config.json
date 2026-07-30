@@ -1,0 +1,607 @@
+{
+    "100001": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/c/c2/q0jfnb1cypytft026714ot1d3992pe8.png/120px-100001.png",
+        "en_name": "specialweek",
+        "meanings": "谢谢"
+    },
+    "100002": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/e/e1/81ofdjeento2rvxpm9m3l86ctegqu4b.png/120px-100002.png",
+        "en_name": "silencesuzuka",
+        "meanings": "你好"
+    },
+    "100003": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/3/31/8e2v5bcg3gbsuiu4jjczmfcj7ascefa.png/120px-100003.png",
+        "en_name": "riceshower",
+        "meanings": "欸..."
+    },
+    "100004": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/3/3b/52mpx5txji6bqxz5ogfi3zinmd48za6.png/120px-100004.png",
+        "en_name": "vodka",
+        "meanings": "可恶啊..."
+    },
+    "100005": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/f/fa/aq8jjzxxfryc74w8einbfraazi4cqdo.png/120px-100005.png",
+        "en_name": "mayanotopgun",
+        "meanings": "欸嘿嘿"
+    },
+    "100006": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/b/bd/e2y08wjxr169udwoztd5t1x79v1yndf.png/120px-100006.png",
+        "en_name": "elcondorpasa",
+        "meanings": "祝贺！"
+    },
+    "100007": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/4/4c/gt9xhawvyd67k5lkpnxg35cuyvqsa0d.png/120px-100007.png",
+        "en_name": "oguricap",
+        "meanings": "(恰胡萝卜中...)"
+    },
+    "100008": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/5/5b/40fqe3f8ir8h9wqthzb1wfu5xncn2eh.png/120px-100008.png",
+        "en_name": "kinghalo",
+        "meanings": "感觉良好"
+    },
+    "100009": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/2/2d/608duhiray4wreoe3q93jkatk41c1ki.png/120px-100009.png",
+        "en_name": "goldship",
+        "meanings": "绝对要赢！"
+    },
+    "100010": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/9/91/aoaxd2anb9nbxowffpc8h5klc4az4dj.png/120px-100010.png",
+        "en_name": "tokaiteio",
+        "meanings": "请多关照"
+    },
+    "100011": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/f/fd/p9d0wfzcn3xvivvvj8jklcxoza2jq6k.png/120px-100011.png",
+        "en_name": "taikishuttle",
+        "meanings": "OK!"
+    },
+    "100012": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/d/dd/4lwg371mus8n9qqb6d4w1gl7x7q8yhu.png/120px-100012.png",
+        "en_name": "daiwascarlet",
+        "meanings": "不要放弃"
+    },
+    "100013": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/f/f2/h5pl33orh7ymgyxsugrp4ekwjzjmuud.png/120px-100013.png",
+        "en_name": "tmoperao",
+        "meanings": "哼！(自豪"
+    },
+    "100014": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/8/8a/c611adwlt0hklg1qeg6uz1ixqfv6pkt.png/120px-100014.png",
+        "en_name": "symbolirudolf",
+        "meanings": "绰绰有余"
+    },
+    "100015": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/d/d3/6md9n80aallzxb7kqi5v61i4tdfhftl.png/120px-100015.png",
+        "en_name": "fujikiseki",
+        "meanings": "OK!"
+    },
+    "100016": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/f/ff/rq8f89hcimay5b0ri6ljd8gud4xjvb4.png/120px-100016.png",
+        "en_name": "maruzensky",
+        "meanings": "晚安"
+    },
+    "100017": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/4/48/ki2lodnycqs61hvgicz4v7ea0cxyk6c.png/120px-100017.png",
+        "en_name": "mejiromcqueen",
+        "meanings": "啊？！"
+    },
+    "100018": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/d/da/7t5uw7ghc2b13kz80d1tix0vc0nnhof.png/120px-100018.png",
+        "en_name": "haruurara",
+        "meanings": "早上好！(元气"
+    },
+    "100019": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/5/5b/etazytaxvl2gjwfgfi44hlthfl05ckz.png/120px-100019.png",
+        "en_name": "seiunsky",
+        "meanings": "辛苦了"
+    },
+    "100020": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/8/86/oiasd2x1jq0ahclhgoyzddqtglt55ko.png/120px-100020.png",
+        "en_name": "hayakawatazuna",
+        "meanings": "(绿帽手捏光球...)"
+    },
+    "100021": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/0/09/p2rfumpxpn4annkhq6aiyff5r0dqnh0.png/120px-100021.png",
+        "en_name": "akikawayayoi",
+        "meanings": "满怀期待哟"
+    },
+    "100022": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/c/c7/kt0ovwkj9y3gyafj61v0a9rdts6y5fw.png/120px-100022.png",
+        "en_name": "agnesdigital",
+        "meanings": "尊死..."
+    },
+    "100023": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/e/eb/ep050z2mu40s37qlzmgttfgix5f57cc.png/120px-100023.png",
+        "en_name": "agnestachyon",
+        "meanings": "嗯~(很满意"
+    },
+    "100024": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/f/ff/t3cqgmrp0ie81zga5mfp44xr1l2muhk.png/120px-100024.png",
+        "en_name": "matikanetannhauser",
+        "meanings": "A! A! O!"
+    },
+    "100025": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/1/11/c1w55i7sdgtciwq1g01nr011x69tj3p.png/120px-100025.png",
+        "en_name": "sakurabakushino",
+        "meanings": "爆进！"
+    },
+    "100026": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/a/a3/mz8clt9u00i568g6e22b64nr5et3z4x.png/120px-100026.png",
+        "en_name": "smartfalcon",
+        "meanings": "欸嘿❤"
+    },
+    "100027": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/1/14/m8aozsf6u1kayfcpnohgeqd1m7zvslr.png/120px-100027.png",
+        "en_name": "nicenature",
+        "meanings": "你好呀~(慵懒"
+    },
+    "100028": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/8/8e/85d1jbfho8hpod4xfk1srm0tjh01i7j.png/120px-100028.png",
+        "en_name": "hishiamazon",
+        "meanings": "就是现在！"
+    },
+    "100029": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/b/b9/6eb8d7non7ytaqdkg9xkvcycphnbczh.png/120px-100029.png",
+        "en_name": "biwahayahide",
+        "meanings": "很有趣呢"
+    },
+    "100030": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/3/32/dteuqt0tpdlv0c8gbesbq64psgs13v3.png/120px-100030.png",
+        "en_name": "mihonobourbon",
+        "meanings": "充电中..."
+    },
+    "100031": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/6/67/8dwmtvrcu7le4hrbsar45zgauianyte.png/120px-100031.png",
+        "en_name": "mejiroryan",
+        "meanings": "让我们一起锻炼肌肉！"
+    },
+    "100032": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/d/d3/57l0me0xaskial8jcpm6fqa4pxskdml.png/120px-100032.png",
+        "en_name": "kitasanblack",
+        "meanings": "让我们充满热情！"
+    },
+    "100033": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/5/52/487ly7ga2u1sigtvn0agc7jhlazwg0j.png/120px-100033.png",
+        "en_name": "satonodiamond",
+        "meanings": "嗯？"
+    },
+    "100034": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/3/3e/q3zfdaa8nriq0eiflz7g4jia3eq8wm6.png/120px-100034.png",
+        "en_name": "supercreek",
+        "meanings": "好孩子..好孩子.."
+    },
+    "100035": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/6/6b/mhouoty0jvgn6qjbz0uyj2iuuygevol.png/120px-100035.png",
+        "en_name": "twinturbo",
+        "meanings": "走走走！"
+    },
+    "100036": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/8/87/9yau1y6kl6zkvkux4elcziexygfg7x1.png/120px-100036.png",
+        "en_name": "marveloussunday",
+        "meanings": "真不可思议"
+    },
+    "100037": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/2/2b/gt3wmqjmx7q4wo3e7on6c9xex4deypj.png/120px-100037.png",
+        "en_name": "naritabrian",
+        "meanings": "我一定要得到它"
+    },
+    "100038": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/2/20/2lsva5mgj4rhpzd125fh5piek2hxgyt.png/120px-100038.png",
+        "en_name": "winningticket",
+        "meanings": "太感动了~(哭"
+    },
+    "100039": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/a/a9/lsbkl4yv1jdxxqek1k8nq7v8cscci9y.png/120px-100039.png",
+        "en_name": "grasswonder",
+        "meanings": "万分抱歉"
+    },
+    "100040": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/c/c5/oo9q49m7jdoaac08ujz8pn4kz09jfch.png/120px-100040.png",
+        "en_name": "anshinzawasasami",
+        "meanings": "哇哦，安心~"
+    },
+    "100041": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/f/f3/hye2tnx0flc6e8ctiyd2j6apw47kzyr.png/120px-100041.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100042": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/b/b4/mgzpido4aqtci9g1k9k9933cvun2qyo.png/120px-100042.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100043": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/d/d0/9r7nhk0utsaeufed91dxyiyulpgk9lu.png/120px-100043.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100044": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/3/31/259a0xqx9tsuedwbspzxmaku5mdcndz.png/120px-100044.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100045": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/0/0a/i8309wq2tj9oea4svdvnc5o9zxuoddr.png/120px-100045.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100046": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/3/3b/8g8g3vl1li1hwg2zjq9fxe0yiennjdu.png/120px-100046.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100047": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/8/8c/pxsmw28w5po0yxtonv1i5a8ggaog318.png/120px-100047.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100048": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/a/a2/gn20gl07usayx98beodgg7v5dpv96g2.png/120px-100048.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100049": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/0/08/qb9foi83hx6kvvkopors507o3syie1i.png/120px-100049.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100050": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/9/92/8gu9yece7h60ln1kskhca1gagl2ivw1.png/120px-100050.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100051": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/e/ec/578335uyodisxnep8p27t3gqd25t6te.png/120px-100051.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100052": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/7/7b/8rrfsa7w1yzz05vs5c38u99r2w5p9so.png/120px-100052.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100053": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/7/78/38g81kltj4ktxmxu6o89ogfmj7ej9wx.png/120px-100053.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100054": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/3/3a/0oxh8id7501nl7vbqs2qjn20g321hn8.png/120px-100054.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100055": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/a/af/cgnk29hfkm6btw5fl8fv6vwmfsruwyu.png/120px-100055.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100056": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/1/1d/inyu17frlkq4ute6jbxjmi7od5n318v.png/120px-100056.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100057": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/9/92/jq1em0gwe4so2xs9yoivolyzttqsfvy.png/120px-100057.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100058": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/1/11/82s9587lsikt8va5p1gmaf5up9zdl5u.png/120px-100058.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100059": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/0/0f/41mfjgat95jig3rph7z3zb07wesx4r0.png/120px-100059.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100060": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/4/45/7dn0ra4bo0g747p1u14sifqlqhrthr8.png/120px-100060.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100061": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/d/d0/iy9dzat9toov5wp5uyhep953msjyige.png/120px-100061.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100062": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/c/ca/90a7v7eugkulo78o824pthzlpbwzno5.png/120px-100062.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100063": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/c/c7/auz8k4xx8cumj4umjhrrrcgy1z17ad2.png/120px-100063.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100064": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/4/47/ljsqihhvf3r8vumx8a0k62bkjuxq7vu.png/120px-100064.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100065": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/a/a1/oa2c43u92lu6hl5qsg725j2sdf1hmol.png/120px-100065.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100066": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/1/1d/7skwb2a9mfw5d4o4tu1m46k7dkw92xe.png/120px-100066.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100067": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/6/61/77wrw8ovkbzto6hbkjb81uqxz21ie35.png/120px-100067.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100068": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/0/0d/l1zcm0hv5tii2lup2is6d5miqf8utf1.png/120px-100068.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100069": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/f/f5/thh6iqybgvjjk8lcba44re7tw6jzmuq.png/120px-100069.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100070": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/0/0c/4si0bcb3z3scfqtijngpfvvtxe05oq6.png/120px-100070.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100071": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/3/32/nsektb5rrwijjsw6whf22985uxmi5po.png/120px-100071.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100072": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/e/e7/20wqklqi2dpnvk8v7x169iufllwgf9l.png/120px-100072.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100073": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/a/a9/2oxp6k238gvsnr62fudxj1klwt6tpub.png/120px-100073.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100074": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/7/7c/4pljzfyej7isib3ca40v8vl9rvba8ci.png/120px-100074.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100075": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/4/4e/1uaw3puixlr87yh50vqyfsxig766hqr.png/120px-100075.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100076": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/0/0f/382nabiuo11wmozp5edutjmit2ojxwp.png/120px-100076.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100077": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/9/93/ef4pttvnhwntv8he8ay1jvi8q5d8135.png/120px-100077.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100078": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/0/02/15b214965h28ht7b2ws8extssgptfqk.png/120px-100078.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100079": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/4/4a/09a9ycjv5a00evoyg7waubwqbr24c46.png/120px-100079.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100080": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/2/22/2pradww16z0oxnzjij0ubrypmsccvpv.png/120px-100080.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100081": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/6/64/kma758ay20y4bixvkik5t6jx4eyxns6.png/120px-100081.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100082": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/f/ff/9et290pypjy6yzyj0ateucl6g0qzvqc.png/120px-100082.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100083": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/9/93/g9x7o6smwv656ou5ca27p0fzxice535.png/120px-100083.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100084": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/9/93/0htmf3pj9634u1rtp4zrf6ltgffindh.png/120px-100084.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100085": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/6/64/r2vj5v8nhydg5881xj8bcayvda1h19s.png/120px-100085.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100086": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/2/27/1hvzb82xwx9gbs2tkzsx80mq1yuiwq7.png/120px-100086.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100087": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/3/3c/czah8qxk43ysmv31r9du36lumtrv24z.png/120px-100087.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100088": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/9/9b/gfuiehizc9uwkhywrvzrzhzi4upi8vb.png/120px-100088.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100089": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/f/fd/cw4d4fifejvk3rvv90gzxs6b3o2rabr.png/120px-100089.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100090": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/0/0f/0z27qmth1c9hb23t3m2irxtxxi3oloi.png/120px-100090.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100091": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/3/31/1e738d4w4fjklmsbirytqt3qfi73twu.png/120px-100091.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100092": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/f/f4/7og18blr3f112xfk2u9nv8ezhb1ox5f.png/120px-100092.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100093": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/7/74/c4dqxpxn2gkcf74v9559pgkg7ftmejn.png/120px-100093.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100094": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/c/c3/1n8r3uhze21k0meunzsbbso1pt2zuer.png/120px-100094.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100095": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/2/28/ad2vcwbhh97ta4ey2moysrpzl8x91po.png/120px-100095.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100096": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/5/5c/88arigcmv2j47ye1zybnogswackgpg4.png/120px-100096.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100097": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/c/ca/1aufmqlt794j0qklqrzsmsvyv80ttwt.png/120px-100097.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100098": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/e/ed/t50apgcy5aihvtes6hsy8u4y625xtkm.png/120px-100098.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100099": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/0/06/19qjkwinq81l0hch2mb5whfwdezn6aw.png/120px-100099.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100100": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/f/f7/dao47i2hhjz08xu4eygn9v642yn2ocq.png/120px-100100.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100101": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/0/06/i5c3inma7n6k57zs595vmi9l2go8ptt.png/120px-100101.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100102": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/8/8e/rfchw9451gzipmwgqnbrbre7jf3z1t7.png/120px-100102.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100103": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/c/c0/5ld6hiawh7psoqumk0er8z8mol8drjp.png/120px-100103.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100104": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/f/f0/0gir0a2nxc3q07er7cqcfhiojaeiicv.png/120px-100104.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100117": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/e/e1/15sjivovhzrfyiqivl1p8gb2ty7efwl.png/120px-100117.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100118": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/7/76/nsr0cv2j03ruw0x9wsp39nn989f9vcw.png/120px-100118.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100119": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/3/39/g01avhh3qfzotzy9tybt106hdkb5wax.png/120px-100119.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100120": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/8/8b/ny8j49qjkfuyj6qgasbdmlqwy9msulz.png/120px-100120.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100121": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/3/32/gyrdhqtw29dnq62l2k5l2yjrtx4prr7.png/120px-100121.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100122": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/a/a6/kmnt8j11j38c79bolk49pehwe321gws.png/120px-100122.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100123": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/c/c7/h55h7fhj6g5m2e10r8qikw0h5rf3iw5.png/120px-100123.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100124": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/9/9d/7czy4twddwqlaklkq2l2urxjmiv9q10.png/120px-100124.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100125": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/e/ec/h21d33vgq5py1gsgss08csrj0kewdir.png/120px-100125.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100126": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/2/20/d0wdj1eub57vxkp3oj5tc5rf2huyold.png/120px-100126.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100127": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/f/f6/7auzasozr8ixzylovt2c2v7laeye3ed.png/120px-100127.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "100128": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/2/25/06ahkvbu82j34726n5f7xlp1rfo17h8.png/120px-100128.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "110001": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/5/57/ffc8016qlceb359lw9phbzts5nd9gpl.png/120px-110001.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "110002": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/9/9f/5ljb01jozyfwvljyji21thcyf34nwrl.png/120px-110002.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "200001": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/1/14/2g540jdaa1k5uwnup9qxrmrmk9krvs3.png/120px-200001.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "200002": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/4/49/lnj51ooabfmb4u6de9xxipuo4xj0y2o.png/120px-200002.png",
+        "en_name": "",
+        "meanings": ""
+    },
+    "200003": {
+        "url": "https://patchwiki.biligame.com/images/umamusume/thumb/1/11/bwcfehgl1tvx7b1bbuq4ummwlls365v.png/120px-200003.png",
+        "en_name": "",
+        "meanings": ""
+    }
+}

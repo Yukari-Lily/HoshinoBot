@@ -1,0 +1,21 @@
+{
+    "速": {
+        "chart_url": "https://wiki.biligame.com/umamusume/日服速卡节奏榜（Ver.2.22.5）",
+        "version": "2.22.5",
+        "img_data": {
+            "温泉乡速2.22.5榜.png": "https://patchwiki.biligame.com/images/umamusume/3/3e/b1dicy0g69kxq7y2pxf7dils422lf4r.png"
+        }
+    },
+    "力": {
+        "chart_url": "https://wiki.biligame.com/umamusume/日服力卡节奏榜（Ver.2.22.5）",
+        "version": 0,
+        "img_data": {}
+    },
+    "智": {
+        "chart_url": "https://wiki.biligame.com/umamusume/日服智卡节奏榜（Ver.2.22.5）",
+        "version": "2.22.5",
+        "img_data": {
+            "温泉乡智2.22.5榜.png": "https://patchwiki.biligame.com/images/umamusume/2/2f/80ywxwcehi5h3n6ykf6twnoauwnckcl.png"
+        }
+    }
+}
