@@ -2,7 +2,6 @@
 backup/
 
 # ===== 密钥 / 运行时配置 =====
-config.py
 config.yaml
 hoshino/config/
 local_coolq_config/
