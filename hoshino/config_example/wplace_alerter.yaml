@@ -1,0 +1,21 @@
+# Wplace 像素画监控配置
+# 复制 config_example 目录到 hoshino/config/ 后填写真实值
+https_proxy: "http://127.0.0.1:7890"   # 图片拉取代理，不需要可留空
+cooldown: 30                            # 检查冷却（秒）
+diff:
+  max_points: 10                        # 推送时显示像素修改条数
+
+# 要监控的像素画
+arts:
+  example1:
+    name: "example A"
+    track: true
+    api_image: "https://backend.wplace.live/files/s0/tiles/Tl X/Tl Y.png"
+    start_coords: {x: 100, y: 200}
+    end_coords: {x: 132, y: 228}
+  example2:
+    name: "example B"
+    track: true
+    api_image: "https://backend.wplace.live/files/s0/tiles/Tl X/Tl Y.png"
+    start_coords: {x: 0, y: 0}
+    end_coords: {x: 64, y: 64}

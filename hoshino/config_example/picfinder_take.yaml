@@ -1,0 +1,30 @@
+# picfinder_take 以图搜图配置
+# 复制 config_example 目录到 hoshino/config/ 后填写真实值
+
+saucenao_key: ""          # SauceNAO API key：https://saucenao.com/user.php
+threshold: 70             # SauceNAO 相似度阈值，低于该值自动追加 ascii2d
+saucenao_result_num: 2    # SauceNAO 结果显示数量
+ascii_result_num: 2       # ascii2d 结果显示数量
+search_timeout: 60        # 连续搜图模式超时（秒）
+daily_limit: 100          # 每人每日搜图限额
+chain_reply: true         # 是否合并转发回复
+thumb_on: true            # 是否显示缩略图
+
+# 自定义 Host，不使用留空
+host_custom:
+  saucenao: ""            # 例: https://saucenao.com 或反代地址
+  ascii: ""               # 例: https://ascii2d.net
+
+# 网络代理，不使用保持空对象
+# 例: { http: "http://127.0.0.1:7890", https: "http://127.0.0.1:7890" }
+proxies: {}
+
+# 频道白名单：{ 频道id: [子频道id, ...] }
+enableguild: {}
+
+helptext: |
+  搜图功能
+  - 识图/搜图/查图/找图 + 图片
+  - 图片 + 识图/搜图/查图/找图
+  - 回复图片 + 识图
+  - @机器人 + 图片（批量搜索模式）

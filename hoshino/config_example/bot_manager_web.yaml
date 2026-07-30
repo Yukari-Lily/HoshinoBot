@@ -1,0 +1,4 @@
+# bot_manager_web 管理面板配置
+# 复制 config_example 目录到 hoshino/config/ 后填写真实值
+password: "123456"        # 登录密码（公网部署务必修改，不要用默认值）
+public_address: ""        # 面板外网地址；留空则用 hoshino 配置的 HOST:PORT

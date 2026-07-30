@@ -23,7 +23,7 @@ except:
 _loaded_services: Dict[str, "Service"] = {}  # {name: service}
 _service_bundle: Dict[str, List["Service"]] = defaultdict(list)
 _re_illegal_char = re.compile(r'[\\/:*?"<>|\.]')
-_service_config_dir = os.path.expanduser('~/.hoshino/service_config/')
+_service_config_dir = os.path.join(os.path.dirname(__file__), 'config', 'service_config')
 os.makedirs(_service_config_dir, exist_ok=True)
 
 
@@ -94,7 +94,7 @@ class Service:
     }
 
     储存位置：
-    `~/.hoshino/service_config/{ServiceName}.json`
+    `hoshino/config/service_config/{ServiceName}.json`
     """
     def __init__(self, name, use_priv=None, manage_priv=None, enable_on_default=None, visible=None,
                  help_=None, bundle=None):

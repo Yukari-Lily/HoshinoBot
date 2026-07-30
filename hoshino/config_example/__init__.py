@@ -16,4 +16,4 @@ for module in MODULES_ON:
         importlib.import_module('hoshino.config.' + module)
         logger.info(f'Succeeded to load config of "{module}"')
     except ModuleNotFoundError:
-        logger.warning(f'Not found config of "{module}"')
+        pass

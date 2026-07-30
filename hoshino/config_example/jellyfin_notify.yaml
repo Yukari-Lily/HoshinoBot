@@ -1,0 +1,29 @@
+# Jellyfin 入库通知配置
+# 复制 config_example 目录到 hoshino/config/ 后填写真实值
+server_url: "http://127.0.0.1:8096"
+username: "your_username"
+password: "your_password"
+napcat_jellyfin_url: ""   # 机器人可访问的 Jellyfin 地址（封面图）；留空则用 server_url
+
+# 推送关键字黑白名单（keywords 为字符串列表）
+filters:
+  whitelist: {enabled: false, keywords: []}
+  blacklist: {enabled: false, keywords: []}
+
+# 媒体库推送模式：per_episode / season_summary / album_only / mute
+library_policies:
+  - libraries: ["新番"]
+    mode: "per_episode"
+  - libraries: ["电视剧"]
+    mode: "season_summary"
+  - libraries: ["音乐"]
+    mode: "album_only"
+  - libraries: [""]
+    mode: "mute"
+
+# 去重 / 合并窗口
+dedupe:
+  season_summary_delay_seconds: 300   # 季度推送延时
+  movie_delay_seconds: 300            # 电影推送延时
+  per_episode_delay_seconds: 30       # 单集推送延时，窗口内达到 merge_threshold 则合并
+  merge_threshold: 4                  # 低于此数量逐条发送，达到则合并为合集通知

@@ -40,6 +40,18 @@ def load_config(inbuilt_file_var):
         return {}
 
 
+def load_yaml_config(name, default=None):
+    """加载 hoshino/config/<name>.yaml；文件不存在或为空返回 default（默认 {}）。"""
+    import yaml
+    path = os.path.join(os.path.dirname(hoshino.config.__file__), f'{name}.yaml')
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            data = yaml.safe_load(f)
+    except FileNotFoundError:
+        return default if default is not None else {}
+    return data or (default if default is not None else {})
+
+
 async def delete_msg(ev: CQEvent):
     try:
         await hoshino.get_bot().delete_msg(self_id=ev.self_id, message_id=ev.message_id)

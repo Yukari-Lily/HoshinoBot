@@ -1,21 +1,43 @@
-Quart==0.14.1
-MarkupSafe~=1.0
-Jinja2~=2.11.2
-werkzeug~=1.0.1
+# Web 框架
+jinja2==3.0.3
+werkzeug==2.0.3
+MarkupSafe
+Quart>=0.15,<0.19
 wsproto~=0.15.0
-nonebot[scheduler]==1.8.0
+
+# Nonebot 及相关
+nonebot[scheduler]~=1.8.0
 aiocqhttp~=1.4.0
-aiohttp~=3.8.1
-lxml>=4.9.1
-pytz>=2019.3
-requests>=2.23.0
-sogou_tr_free~=0.0.8
-zhconv~=1.4.1
-Pillow~=9.1.0
-matplotlib~=3.2.1
-numpy~=1.22.3
-beautifulsoup4~=4.9.0
-pygtrie~=2.3.3
-tinydb~=4.1.1
-peony-twitter[all]~=2.1.2
-cloudscraper~=1.2.60
+
+# 网络请求
+requests>=2.31
+aiohttp>=3.8.1
+httpx~=0.26.0
+curl-cffi
+
+# 数据/时间
+pytz~=2024.1
+python-dateutil~=2.8.2
+numpy>=1.24,<2.3
+prettytable==3.2.0
+
+# HTML/爬虫
+beautifulsoup4~=4.12.0
+lxml>=4.8.0
+selenium>=4.0
+
+# NLP/模糊匹配
+fuzzywuzzy==0.18.0
+pygtrie>=2.0
+zhconv==1.4.1
+
+# 图像
+Pillow>=10
+matplotlib>=3.2.0
+opencv-python-headless>=4.8
+
+# Git
+GitPython==3.1.27
+
+# YAML
+pyyaml

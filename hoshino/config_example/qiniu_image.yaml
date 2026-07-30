@@ -1,0 +1,9 @@
+# 七牛图像生成配置
+# 复制 config_example 目录到 hoshino/config/ 后填写真实值
+api_key: ""              # 必填：七牛 API key
+api_base: "https://api.qnaigc.com"
+model: "openai/gpt-image-2"
+retries: 3               # 建议 >= 3
+timeout: 240             # HTTP 超时（秒）
+concurrency: 1           # 并发限制（避免压垮上游/触发风控）
+dedup_ttl: 20            # 去重时间窗（秒）
