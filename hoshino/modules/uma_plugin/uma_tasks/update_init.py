@@ -10,7 +10,7 @@ current_dir = os.path.join(os.path.dirname(__file__), f'tasks_config.json')
 
 
 async def update():
-    if not os.path.exists(current_dir):
+    if not os.path.exists(current_dir) or os.path.getsize(current_dir) <= 2:
         logger.info('====未检测到马娘限时任务信息文件，正在开始创建文件和更新信息====')
         init_data = {}
         with open(current_dir, 'w', encoding='UTF-8') as f:

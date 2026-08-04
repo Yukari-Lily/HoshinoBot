@@ -98,6 +98,8 @@ async def judge_update():
     last_time = await get_update_time()
     with open(current_dir, 'r', encoding='UTF-8') as f:
         f_data = json.load(f)
+    if 'last_time' not in f_data:
+        return True
     set_time = datetime.strptime(f_data['last_time'], "%Y-%m-%d %H:%M:%S")
     if last_time > set_time:
         return True
