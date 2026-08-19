@@ -19,3 +19,22 @@ arts:
     api_image: "https://backend.wplace.live/files/s0/tiles/Tl X/Tl Y.png"
     start_coords: {x: 0, y: 0}
     end_coords: {x: 64, y: 64}
+  # 跨多个片区时，一个 art 配置多个图块，按从左到右、从上到下排列。
+  # 每个图块的 start/end_coords 都以该图块自身的左上角为原点。
+  example_cross_tile:
+    name: "example cross tile"
+    track: true
+    tile_columns: 2
+    api_images:
+      - api_image: "https://backend.wplace.live/files/s0/tiles/Tl X1/Tl Y1.png"
+        start_coords: {x: 900, y: 900}
+        end_coords: {x: 1000, y: 1000}
+      - api_image: "https://backend.wplace.live/files/s0/tiles/Tl X2/Tl Y1.png"
+        start_coords: {x: 0, y: 900}
+        end_coords: {x: 100, y: 1000}
+      - api_image: "https://backend.wplace.live/files/s0/tiles/Tl X1/Tl Y2.png"
+        start_coords: {x: 900, y: 0}
+        end_coords: {x: 1000, y: 100}
+      - api_image: "https://backend.wplace.live/files/s0/tiles/Tl X2/Tl Y2.png"
+        start_coords: {x: 0, y: 0}
+        end_coords: {x: 100, y: 100}

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import hashlib
 import io
+import math
 from typing import Dict, List, Optional, Tuple
 
 import cv2
@@ -30,6 +31,63 @@ class DiffEngine:
             out = io.BytesIO()
             crop.save(out, format="PNG")
             return out.getvalue()
+
+    @staticmethod
+    def merge_png_bytes(
+        images: List[bytes], columns: Optional[int] = None
+    ) -> Tuple[bytes, List[Tuple[int, int, int, int]]]:
+        """Merge images in a grid; return (png, [(x, y, w, h)] per image)."""
+        if not images:
+            raise ValueError("未配置图块图片")
+        if len(images) == 1:
+            with Image.open(io.BytesIO(images[0])) as im:
+                return images[0], [(0, 0, im.width, im.height)]
+
+        opened = []
+        try:
+            for byts in images:
+                with Image.open(io.BytesIO(byts)) as im:
+                    opened.append(im.convert("RGBA"))
+
+            if columns is None:
+                columns = max(1, math.ceil(math.sqrt(len(opened))))
+            if columns < 1 or columns > len(opened):
+                raise ValueError("tile_columns 配置无效")
+
+            rows = math.ceil(len(opened) / columns)
+            column_widths = [
+                max(im.width for i, im in enumerate(opened) if i % columns == column)
+                for column in range(columns)
+            ]
+            row_heights = [
+                max(
+                    im.height
+                    for i, im in enumerate(opened)
+                    if i // columns == row
+                )
+                for row in range(rows)
+            ]
+            x_positions = [0]
+            for width in column_widths[:-1]:
+                x_positions.append(x_positions[-1] + width)
+            y_positions = [0]
+            for height in row_heights[:-1]:
+                y_positions.append(y_positions[-1] + height)
+
+            merged = Image.new("RGBA", (sum(column_widths), sum(row_heights)))
+            positions = []
+            for i, im in enumerate(opened):
+                x = x_positions[i % columns]
+                y = y_positions[i // columns]
+                positions.append((x, y, im.width, im.height))
+                merged.paste(im, (x, y))
+
+            out = io.BytesIO()
+            merged.save(out, format="PNG")
+            return out.getvalue(), positions
+        finally:
+            for im in opened:
+                im.close()
 
     @staticmethod
     def imread_rgba(byts: bytes) -> np.ndarray:

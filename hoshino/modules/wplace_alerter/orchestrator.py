@@ -7,6 +7,7 @@ layer is responsible for broadcasting. Never call bot APIs from here.
 import hashlib
 import logging
 import os
+import re
 import threading
 from typing import Dict, List, Optional, Set, Tuple
 
@@ -15,9 +16,17 @@ from .diff import DiffEngine
 from .fetcher import ImageFetcher
 from .palette import COLOR_LIST, zh_color
 
+Coords = Tuple[int, int, int, int]
+ImageSpec = Tuple[str, Coords]
+ImageRegion = Tuple[int, int, int, int, str, Coords]
+
 
 def _bytes_hash(b: bytes) -> str:
     return hashlib.blake2b(b, digest_size=16).hexdigest()
+
+
+def _index_hash(index_image) -> str:
+    return hashlib.blake2b(index_image.tobytes(), digest_size=16).hexdigest()
 
 
 def _save_text(path: str, s: str) -> None:
@@ -98,26 +107,127 @@ class Orchestrator:
                 self._locks[key] = threading.Lock()
             return self._locks[key]
 
-    def _art_meta(self, key: str) -> Tuple[Optional[Dict], str, str, Tuple[int, int, int, int]]:
+    def _art_meta(
+        self, key: str
+    ) -> Tuple[Optional[Dict], str, List[ImageSpec], Optional[int]]:
         arts = self.settings.get("arts") or {}
         art = arts.get(key)
         if not art:
-            return None, "", "", (0, 0, 0, 0)
+            return None, "", [], None
         name = (art.get("name") or "").strip() or key
         try:
-            api_image = art["api_image"]
-            coords = (
-                int(art["start_coords"]["x"]),
-                int(art["start_coords"]["y"]),
-                int(art["end_coords"]["x"]),
-                int(art["end_coords"]["y"]),
-            )
+            raw = art.get("api_images", art.get("api_image"))
+            if isinstance(raw, str):
+                url = raw.strip()
+                if not url:
+                    raise ValueError("api_image 配置无效")
+                image_specs = [(url, self._coords_from_config(art))]
+            elif isinstance(raw, (list, tuple)) and raw and all(
+                isinstance(item, dict) for item in raw
+            ):
+                image_specs = []
+                for item in raw:
+                    url = item.get("api_image", item.get("url"))
+                    if not isinstance(url, str) or not url.strip():
+                        raise ValueError("api_images 中缺少图片 URL")
+                    image_specs.append((url.strip(), self._coords_from_config(item)))
+            else:
+                raise ValueError("api_image 需为 URL，或 api_images 需为对象列表")
+
+            tile_columns = art.get("tile_columns")
+            if tile_columns is not None:
+                tile_columns = int(tile_columns)
+                if tile_columns < 1 or tile_columns > len(image_specs):
+                    raise ValueError("tile_columns 配置无效")
         except (KeyError, TypeError, ValueError) as e:
             self.logger.error("art[%s] 配置不完整：%s", key, e)
-            return None, name, "", (0, 0, 0, 0)
-        if not api_image:
-            return None, name, "", (0, 0, 0, 0)
-        return art, name, str(api_image), coords
+            return None, name, [], None
+        return art, name, image_specs, tile_columns
+
+    @staticmethod
+    def _coords_from_config(config: Dict) -> Coords:
+        coords = (
+            int(config["start_coords"]["x"]),
+            int(config["start_coords"]["y"]),
+            int(config["end_coords"]["x"]),
+            int(config["end_coords"]["y"]),
+        )
+        if coords[2] <= coords[0] or coords[3] <= coords[1]:
+            raise ValueError("坐标范围无效")
+        return coords
+
+    @staticmethod
+    def _tile_coords(url: str) -> Tuple[str, str]:
+        match = re.search(r"/tiles/(-?\d+)/(-?\d+)(?:\.png)?(?:[/?#]|$)", url)
+        return (match.group(1), match.group(2)) if match else ("?", "?")
+
+    @classmethod
+    def _pixel_location_text(cls, url: str, x: int, y: int) -> str:
+        tile_x, tile_y = cls._tile_coords(url)
+        return f"Tl X: {tile_x}, Tl Y: {tile_y}, Px X: {x}, Px Y: {y}"
+
+    def _pixel_location(self, px: Dict[str, object], image_regions: List[ImageRegion]) -> str:
+        x = int(px["x"])
+        y = int(px["y"])
+        for region_x, region_y, width, height, url, item_coords in image_regions:
+            if region_x <= x < region_x + width and region_y <= y < region_y + height:
+                local_x = item_coords[0] + x - region_x
+                local_y = item_coords[1] + y - region_y
+                return self._pixel_location_text(url, local_x, local_y)
+        return f"Tl X: ?, Tl Y: ?, Px X: {x}, Px Y: {y}"
+
+    def _fetch_cropped(
+        self,
+        image_specs: List[ImageSpec],
+        tile_columns: Optional[int],
+    ) -> Tuple[bytes, List[ImageRegion]]:
+        crops = [
+            self.diff.crop_bytes_to_png(self.fetcher.fetch_png(url), coords)
+            for url, coords in image_specs
+        ]
+        merged, positions = self.diff.merge_png_bytes(crops, columns=tile_columns)
+        image_regions = [
+            (*position, url, coords)
+            for position, (url, coords) in zip(positions, image_specs)
+        ]
+        return merged, image_regions
+
+    def _fetch_snapshot(self, image_specs: List[ImageSpec], tile_columns: Optional[int]):
+        cropped_bytes, image_regions = self._fetch_cropped(image_specs, tile_columns)
+        rgba = self.diff.imread_rgba(cropped_bytes)
+        index = self.diff.rgba_to_index_image(rgba)
+        return cropped_bytes, rgba, index, image_regions
+
+    def _change_report(self, name: str, good_idx, new_idx, image_regions: List[ImageRegion]):
+        bboxes = self.diff.diff_regions_idx(good_idx, new_idx)
+        sample_limit = max(1, min(5000, max(self.diff.max_detail_points, 20)))
+        changed, total = self.diff.changed_pixels_from_idx(
+            good_idx, new_idx, limit=sample_limit
+        )
+
+        details: List[str] = []
+        top_n = min(self.diff.max_detail_points, len(changed))
+        for i in range(top_n):
+            px = changed[i]
+            old_idx = px["old_idx"]
+            new_idx_i = px["new_idx"]
+            old_name = COLOR_LIST[old_idx].name if 0 <= old_idx < len(COLOR_LIST) else None
+            new_name = (
+                COLOR_LIST[new_idx_i].name if 0 <= new_idx_i < len(COLOR_LIST) else None
+            )
+            details.append(
+                f"[{i + 1}] {self._pixel_location(px, image_regions)} "
+                f"{zh_color(old_name)} → {zh_color(new_name)}"
+            )
+        if total > top_n:
+            details.append(f"...(共 {total} 个像素修改，{len(bboxes)} 个区域)")
+
+        name_fmt = f"[{name}]" if name else ""
+        message = (
+            f"[Wplace]{name_fmt} 检测到 {total} 个像素被修改喵！\n修改详情：\n"
+            + ("\n".join(details) if details else "（变化较大，略去具体像素）")
+        )
+        return message, total, len(bboxes)
 
     def _mark_restored(self, key: str, name: str, how: str) -> Dict:
         """Clear alerted state and optionally request a restore notification."""
@@ -137,7 +247,7 @@ class Orchestrator:
     def set_current_as_baseline(self, key: str) -> Dict:
         lock = self._get_lock(key)
         with lock:
-            art, name, api_image, coords = self._art_meta(key)
+            art, name, image_specs, tile_columns = self._art_meta(key)
             if not art:
                 tip = f"未找到或配置无效 key={key}"
                 return _result("error", tip, key=key, name=name, error=tip)
@@ -147,10 +257,8 @@ class Orchestrator:
             except ValueError as e:
                 return _result("error", str(e), key=key, name=name, error=str(e))
             try:
-                png_bytes = self.fetcher.fetch_png(api_image)
-                cropped_bytes = self.diff.crop_bytes_to_png(png_bytes, coords)
-                rgba = self.diff.imread_rgba(cropped_bytes)
-                idx_hash = self.diff.index_hash_from_rgba(rgba)
+                cropped_bytes, _, index, _ = self._fetch_snapshot(image_specs, tile_columns)
+                idx_hash = _index_hash(index)
             except Exception as e:
                 return _result(
                     "error",
@@ -177,7 +285,7 @@ class Orchestrator:
     def refresh_one(self, key: str) -> Dict:
         lock = self._get_lock(key)
         with lock:
-            art, name, api_image, coords = self._art_meta(key)
+            art, name, image_specs, tile_columns = self._art_meta(key)
             if not art:
                 tip = f"未找到或配置无效 key={key}"
                 return _result("error", tip, key=key, name=name, error=tip)
@@ -194,15 +302,14 @@ class Orchestrator:
             orig_path = os.path.join(path, "original.png")
 
             try:
-                png_bytes = self.fetcher.fetch_png(api_image)
-                cropped_bytes = self.diff.crop_bytes_to_png(png_bytes, coords)
-                new_rgba = self.diff.imread_rgba(cropped_bytes)
-                new_idx = self.diff.rgba_to_index_image(new_rgba)
+                cropped_bytes, new_rgba, new_idx, image_regions = self._fetch_snapshot(
+                    image_specs, tile_columns
+                )
             except Exception as e:
                 self.logger.error("拉取/解码 %s 失败：%s", name, e)
                 return _result("error", f"拉取失败：{name}：{e}", key=key, name=name, error=str(e))
 
-            new_idx_hash = hashlib.blake2b(new_idx.tobytes(), digest_size=16).hexdigest()
+            new_idx_hash = _index_hash(new_idx)
             old_idx_hash = _read_text(hash_path)
 
             # 1) index-hash short-circuit
@@ -261,34 +368,7 @@ class Orchestrator:
                             return self._mark_restored(key, name, "恢复至原图")
 
             # vandalized
-            bboxes = self.diff.diff_regions_idx(good_idx, new_idx)
-            sample_limit = max(1, min(5000, max(self.diff.max_detail_points, 20)))
-            changed, total = self.diff.changed_pixels_from_idx(
-                good_idx, new_idx, limit=sample_limit
-            )
-
-            details: List[str] = []
-            top_n = min(self.diff.max_detail_points, len(changed))
-            for i in range(top_n):
-                px = changed[i]
-                old_idx = px["old_idx"]
-                new_idx_i = px["new_idx"]
-                old_name = COLOR_LIST[old_idx].name if 0 <= old_idx < len(COLOR_LIST) else None
-                new_name = (
-                    COLOR_LIST[new_idx_i].name if 0 <= new_idx_i < len(COLOR_LIST) else None
-                )
-                details.append(
-                    f"[{i + 1}] X={coords[0] + px['x']}, Y={coords[1] + px['y']} "
-                    f"{zh_color(old_name)} → {zh_color(new_name)}"
-                )
-            if total > top_n:
-                details.append(f"...(共 {total} 个像素修改，{len(bboxes)} 个区域)")
-
-            name_fmt = f"[{name}]" if name else ""
-            msg = (
-                f"[Wplace]{name_fmt} 检测到 {total} 个像素被修改喵！\n修改详情：\n"
-                + ("\n".join(details) if details else "（变化较大，略去具体像素）")
-            )
+            msg, total, bbox_count = self._change_report(name, good_idx, new_idx, image_regions)
 
             if key not in self.alerted_once:
                 self.alerted_once.add(key)
@@ -301,7 +381,7 @@ class Orchestrator:
                     notify=True,
                     images=[new_path, good_path],
                     changed=total,
-                    regions=len(bboxes),
+                    regions=bbox_count,
                 )
 
             self.logger.info("%s 仍有修改未修复（变更 %s 像素）", name, total)
@@ -312,7 +392,7 @@ class Orchestrator:
                 name=name,
                 notify=False,
                 changed=total,
-                regions=len(bboxes),
+                regions=bbox_count,
             )
 
     def status_lines(self) -> List[str]:
