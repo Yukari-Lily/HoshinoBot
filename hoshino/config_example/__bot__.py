@@ -39,7 +39,6 @@ MODULES_ON = {
     'bot_manager_web',
     'torrent_analyze_HoshinoBot',
     'Blue_Archive_HoshinoBot',
-    'qiniu_image',
     'jellyfin_notify',
     'wplace_alerter',
     'music_voice',
