@@ -135,12 +135,19 @@ async def resolve_song_source(song_id: int) -> str:
         separator = "&" if "?" in api else "?"
         url = "%s%sserver=netease&type=url&id=%d" % (api, separator, song_id)
         async with httpx.AsyncClient(timeout=5, follow_redirects=True) as client:
-            response = await client.get(url, headers=REQUEST_HEADERS)
-            response.raise_for_status()
-            source = parse_source_response(response.text)
-            if not source:
-                raise MusicVoiceError("音源接口未返回有效链接")
-            return source
+            async with client.stream("GET", url, headers=REQUEST_HEADERS) as response:
+                response.raise_for_status()
+                content_type = response.headers.get("content-type", "").lower()
+                if (content_type.startswith("audio/")
+                        or content_type.startswith("video/")
+                        or "application/octet-stream" in content_type):
+                    return str(response.url)
+
+                await response.aread()
+                source = parse_source_response(response.text)
+                if not source:
+                    raise MusicVoiceError("音源接口未返回有效链接")
+                return source
 
     tasks = [asyncio.ensure_future(fetch(api)) for api in FULL_SOURCE_APIS]
     errors = []
@@ -192,36 +199,77 @@ def _ellipsize(draw: ImageDraw.ImageDraw, text: str, font, max_width: int) -> st
     return text + suffix
 
 
+def _duration_text(milliseconds: object) -> str:
+    try:
+        seconds = max(0, int(milliseconds) // 1000)
+    except (TypeError, ValueError):
+        seconds = 0
+    return "%d:%02d" % divmod(seconds, 60)
+
+
 def render_song_list(songs: List[Dict[str, object]]) -> str:
-    """生成深色歌单图片，返回 OneBot 可直接发送的 base64 URL。"""
-    width = 1000
-    row_height = 72
+    """生成网易云风格歌单图片，返回 OneBot 可直接发送的 base64 URL。"""
+    width = 1040
+    row_height = 78
     margin = 42
-    height = 105 + row_height * len(songs) + 42
-    image = Image.new("RGB", (width, height), (20, 22, 28))
+    header_height = 142
+    height = header_height + row_height * len(songs) + 38
+    image = Image.new("RGB", (width, height))
+    pixels = image.load()
+    for y in range(height):
+        ratio = y / max(1, height - 1)
+        color = (
+            int(24 + 5 * ratio),
+            int(26 + 4 * ratio),
+            int(35 + 10 * ratio),
+        )
+        for x in range(width):
+            pixels[x, y] = color
+
     draw = ImageDraw.Draw(image)
-    title_font = _load_font(34)
+    title_font = _load_font(36)
+    subtitle_font = _load_font(19)
     item_font = _load_font(25)
-    meta_font = _load_font(19)
-    draw.text((margin, 30), "NetEase Music", fill=(245, 247, 250), font=title_font)
-    draw.line((margin, 82, width - margin, 82), fill=(68, 72, 84), width=2)
+    meta_font = _load_font(18)
+    duration_font = _load_font(18)
+
+    draw.ellipse((margin, 31, margin + 62, 93), fill=(236, 65, 82))
+    draw.ellipse((margin + 17, 48, margin + 45, 76), outline="white", width=4)
+    draw.ellipse((margin + 27, 58, margin + 35, 66), fill="white")
+    draw.text((margin + 82, 27), "网易云音乐", fill=(250, 250, 252), font=title_font)
+    draw.text((margin + 84, 77), "发送序号选择歌曲", fill=(157, 163, 178), font=subtitle_font)
+    draw.line((margin, 116, width - margin, 116), fill=(61, 65, 78), width=2)
 
     for index, song in enumerate(songs, 1):
-        y = 103 + (index - 1) * row_height
-        draw.rounded_rectangle((margin, y, margin + 46, y + 42), radius=10, fill=(221, 62, 82))
+        y = header_height + (index - 1) * row_height
+        card_fill = (34, 37, 48) if index % 2 else (31, 34, 44)
+        draw.rounded_rectangle(
+            (margin, y, width - margin, y + 64), radius=14, fill=card_fill
+        )
+        draw.rounded_rectangle(
+            (margin + 14, y + 11, margin + 58, y + 53), radius=12, fill=(218, 58, 76)
+        )
         number = str(index)
         bbox = draw.textbbox((0, 0), number, font=item_font)
         draw.text(
-            (margin + 23 - (bbox[2] - bbox[0]) / 2, y + 20 - (bbox[3] - bbox[1]) / 2 - 2),
+            (margin + 36 - (bbox[2] - bbox[0]) / 2, y + 31 - (bbox[3] - bbox[1]) / 2 - 3),
             number,
             fill="white",
             font=item_font,
         )
-        title = _ellipsize(draw, str(song.get("name") or ""), item_font, 825)
+        title = _ellipsize(draw, str(song.get("name") or ""), item_font, 690)
         meta = "%s · %s" % (song.get("artists") or "未知歌手", song.get("album") or "未知专辑")
-        meta = _ellipsize(draw, meta, meta_font, 825)
-        draw.text((margin + 66, y - 2), title, fill=(240, 242, 247), font=item_font)
-        draw.text((margin + 66, y + 34), meta, fill=(163, 168, 181), font=meta_font)
+        meta = _ellipsize(draw, meta, meta_font, 690)
+        draw.text((margin + 78, y + 5), title, fill=(244, 245, 249), font=item_font)
+        draw.text((margin + 78, y + 38), meta, fill=(153, 159, 175), font=meta_font)
+        duration = _duration_text(song.get("duration"))
+        duration_box = draw.textbbox((0, 0), duration, font=duration_font)
+        draw.text(
+            (width - margin - 22 - (duration_box[2] - duration_box[0]), y + 23),
+            duration,
+            fill=(126, 132, 148),
+            font=duration_font,
+        )
 
     buffer = BytesIO()
     image.save(buffer, "PNG", optimize=True)

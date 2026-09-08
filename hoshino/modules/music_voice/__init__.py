@@ -61,10 +61,6 @@ async def _expire_selection(bot, ev, key: Tuple[int, int, int], created_at: floa
     if selection and selection["created_at"] == created_at:
         _pending.pop(key, None)
         await _delete_message(bot, ev, selection.get("list_message_id"))
-        try:
-            await bot.send(ev, "输入超时，已取消点歌")
-        except Exception as exc:
-            sv.logger.exception(exc)
 
 
 @sv.on_prefix("点歌")
@@ -92,7 +88,6 @@ async def music_search(bot, ev):
         await bot.send(ev, "没有找到相关歌曲")
         return
 
-    timeout = max(1, int(config["selection_timeout"]))
     if config.get("image_mode", True):
         song_list = str(MessageSegment.image(render_song_list(songs)))
     else:
@@ -100,10 +95,7 @@ async def music_search(bot, ev):
             index, song["name"], song["artists"], song["album"]
         ) for index, song in enumerate(songs, 1)]
         song_list = "NetEase Music:\n" + "\n".join(lines)
-    result = await bot.send(
-        ev,
-        song_list + "\n请在 %d 秒内发送歌曲序号，发送 0 或“不听了”退出" % timeout,
-    )
+    result = await bot.send(ev, song_list)
     created_at = time.monotonic()
     selection = {
         "songs": songs,
@@ -115,30 +107,23 @@ async def music_search(bot, ev):
     selection["timeout_task"] = asyncio.ensure_future(_expire_selection(bot, ev, key, created_at))
 
 
-@sv.on_rex(re.compile(r"^(?:0|[1-9]\d*|不听了)$"), normalize=False)
+@sv.on_rex(re.compile(r"^[1-9]\d*$"), normalize=False)
 async def music_select(bot, ev):
     key = _session_key(ev)
     selection = _pending.get(key)
     if not selection:
         raise SwitchException()
 
+    answer = ev.message.extract_plain_text().strip()
+    index = int(answer) - 1
+    songs = selection["songs"]
+    if index < 0 or index >= len(songs):
+        raise SwitchException()
+
     _pending.pop(key, None)
     timeout_task = selection.get("timeout_task")
     if timeout_task:
         timeout_task.cancel()
-
-    answer = ev.message.extract_plain_text().strip()
-    if answer in ("0", "不听了"):
-        await _delete_message(bot, ev, selection.get("list_message_id"))
-        await bot.send(ev, "已退出歌曲选择")
-        return
-
-    index = int(answer) - 1
-    songs = selection["songs"]
-    if index < 0 or index >= len(songs):
-        await _delete_message(bot, ev, selection.get("list_message_id"))
-        await bot.send(ev, "输入序号错误，已退出歌曲选择")
-        return
 
     song = songs[index]
     max_duration = max(1, int(config["max_song_duration_minutes"])) * 60 * 1000
