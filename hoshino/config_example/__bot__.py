@@ -42,4 +42,6 @@ MODULES_ON = {
     'qiniu_image',
     'jellyfin_notify',
     'wplace_alerter',
+    'music_voice',
+    'bili_parser',
 }

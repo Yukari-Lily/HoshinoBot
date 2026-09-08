@@ -1,0 +1,8 @@
+# 精简自 koishi-plugin-music-voice 的实际使用配置
+generation_tip: "稍等喵…"
+image_mode: true
+search_list_count: 10
+
+# 保留的原插件默认行为
+selection_timeout: 45
+max_song_duration_minutes: 30

@@ -1,0 +1,7 @@
+# 精简自 @summonhim/koishi-plugin-bili-parser 的实际使用配置
+show_quote: false
+parse_limit: 3
+delimiter: "------"
+
+# false 时无需完整链接，消息中的 AV/BV 号也会被解析
+video_full_url: false
