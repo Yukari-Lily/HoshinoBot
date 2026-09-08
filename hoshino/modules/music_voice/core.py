@@ -7,7 +7,7 @@ from typing import Dict, Iterable, List, Optional
 from urllib.parse import quote, urlparse
 
 import httpx
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 
 SEARCH_URL = "https://music.163.com/api/search/get/web"
@@ -207,70 +207,110 @@ def _duration_text(milliseconds: object) -> str:
     return "%d:%02d" % divmod(seconds, 60)
 
 
-def render_song_list(songs: List[Dict[str, object]]) -> str:
-    """生成网易云风格歌单图片，返回 OneBot 可直接发送的 base64 URL。"""
-    width = 1040
-    row_height = 78
-    margin = 42
-    header_height = 142
-    height = header_height + row_height * len(songs) + 38
+def render_song_list(songs: List[Dict[str, object]], keyword: str = "") -> str:
+    """生成海报式歌单图片，返回 OneBot 可直接发送的 base64 URL。"""
+    width = 1080
+    row_height = 82
+    margin = 54
+    panel_top = 248
+    panel_padding = 22
+    footer_height = 82
+    panel_height = panel_padding * 2 + row_height * len(songs)
+    height = panel_top + panel_height + footer_height
     image = Image.new("RGB", (width, height))
     pixels = image.load()
     for y in range(height):
         ratio = y / max(1, height - 1)
         color = (
-            int(24 + 5 * ratio),
-            int(26 + 4 * ratio),
-            int(35 + 10 * ratio),
+            int(19 + 10 * ratio),
+            int(20 + 7 * ratio),
+            int(34 + 16 * ratio),
         )
         for x in range(width):
             pixels[x, y] = color
 
+    glow = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    glow_draw = ImageDraw.Draw(glow)
+    glow_draw.ellipse((-160, -180, 440, 420), fill=(226, 55, 101, 105))
+    glow_draw.ellipse((760, -230, 1260, 300), fill=(91, 75, 220, 95))
+    glow_draw.ellipse((730, height - 330, 1250, height + 140), fill=(34, 128, 190, 45))
+    glow = glow.filter(ImageFilter.GaussianBlur(105))
+    image = Image.alpha_composite(image.convert("RGBA"), glow)
+
+    overlay = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    overlay_draw = ImageDraw.Draw(overlay)
+    overlay_draw.rounded_rectangle(
+        (margin, panel_top, width - margin, panel_top + panel_height),
+        radius=30,
+        fill=(255, 255, 255, 17),
+        outline=(255, 255, 255, 25),
+        width=2,
+    )
+    image = Image.alpha_composite(image, overlay)
     draw = ImageDraw.Draw(image)
-    title_font = _load_font(36)
-    subtitle_font = _load_font(19)
-    item_font = _load_font(25)
+
+    title_font = _load_font(47)
+    subtitle_font = _load_font(20)
+    item_font = _load_font(26)
     meta_font = _load_font(18)
     duration_font = _load_font(18)
+    index_font = _load_font(19)
 
-    draw.ellipse((margin, 31, margin + 62, 93), fill=(236, 65, 82))
-    draw.ellipse((margin + 17, 48, margin + 45, 76), outline="white", width=4)
-    draw.ellipse((margin + 27, 58, margin + 35, 66), fill="white")
-    draw.text((margin + 82, 27), "网易云音乐", fill=(250, 250, 252), font=title_font)
-    draw.text((margin + 84, 77), "发送序号选择歌曲", fill=(157, 163, 178), font=subtitle_font)
-    draw.line((margin, 116, width - margin, 116), fill=(61, 65, 78), width=2)
+    display_keyword = keyword.strip() or "歌曲搜索"
+    display_keyword = _ellipsize(draw, "“%s”" % display_keyword, title_font, 700)
+    draw.text((margin, 65), display_keyword, fill=(251, 250, 253), font=title_font)
+    draw.text(
+        (margin + 2, 134),
+        "网易云音乐  ·  %d 首搜索结果" % len(songs),
+        fill=(180, 181, 196),
+        font=subtitle_font,
+    )
+
+    disc_x, disc_y = width - margin - 94, 102
+    draw.ellipse((disc_x - 66, disc_y - 66, disc_x + 66, disc_y + 66), fill=(24, 25, 36, 220))
+    draw.ellipse((disc_x - 52, disc_y - 52, disc_x + 52, disc_y + 52), outline=(96, 94, 117), width=2)
+    draw.ellipse((disc_x - 35, disc_y - 35, disc_x + 35, disc_y + 35), outline=(72, 72, 92), width=2)
+    draw.ellipse((disc_x - 18, disc_y - 18, disc_x + 18, disc_y + 18), fill=(239, 68, 98))
+    draw.ellipse((disc_x - 5, disc_y - 5, disc_x + 5, disc_y + 5), fill=(248, 222, 226))
 
     for index, song in enumerate(songs, 1):
-        y = header_height + (index - 1) * row_height
-        card_fill = (34, 37, 48) if index % 2 else (31, 34, 44)
-        draw.rounded_rectangle(
-            (margin, y, width - margin, y + 64), radius=14, fill=card_fill
-        )
-        draw.rounded_rectangle(
-            (margin + 14, y + 11, margin + 58, y + 53), radius=12, fill=(218, 58, 76)
-        )
-        number = str(index)
-        bbox = draw.textbbox((0, 0), number, font=item_font)
+        y = panel_top + panel_padding + (index - 1) * row_height
+        if index > 1:
+            draw.line(
+                (margin + 40, y, width - margin - 40, y),
+                fill=(70, 70, 86),
+                width=1,
+            )
+        number = "%02d" % index
         draw.text(
-            (margin + 36 - (bbox[2] - bbox[0]) / 2, y + 31 - (bbox[3] - bbox[1]) / 2 - 3),
+            (margin + 35, y + 27),
             number,
-            fill="white",
-            font=item_font,
+            fill=(245, 78, 108),
+            font=index_font,
         )
         title = _ellipsize(draw, str(song.get("name") or ""), item_font, 690)
         meta = "%s · %s" % (song.get("artists") or "未知歌手", song.get("album") or "未知专辑")
         meta = _ellipsize(draw, meta, meta_font, 690)
-        draw.text((margin + 78, y + 5), title, fill=(244, 245, 249), font=item_font)
-        draw.text((margin + 78, y + 38), meta, fill=(153, 159, 175), font=meta_font)
+        draw.text((margin + 105, y + 10), title, fill=(244, 244, 248), font=item_font)
+        draw.text((margin + 105, y + 47), meta, fill=(147, 150, 169), font=meta_font)
         duration = _duration_text(song.get("duration"))
         duration_box = draw.textbbox((0, 0), duration, font=duration_font)
         draw.text(
-            (width - margin - 22 - (duration_box[2] - duration_box[0]), y + 23),
+            (width - margin - 36 - (duration_box[2] - duration_box[0]), y + 30),
             duration,
-            fill=(126, 132, 148),
+            fill=(137, 140, 160),
             font=duration_font,
         )
 
+    footer_y = panel_top + panel_height + 29
+    draw.ellipse((margin + 4, footer_y + 5, margin + 12, footer_y + 13), fill=(245, 72, 103))
+    draw.text(
+        (margin + 25, footer_y),
+        "发送序号选择歌曲  ·  45 秒后自动关闭",
+        fill=(135, 138, 157),
+        font=meta_font,
+    )
+
     buffer = BytesIO()
-    image.save(buffer, "PNG", optimize=True)
+    image.convert("RGB").save(buffer, "PNG", optimize=True)
     return "base64://" + base64.b64encode(buffer.getvalue()).decode("ascii")

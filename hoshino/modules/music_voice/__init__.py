@@ -89,7 +89,7 @@ async def music_search(bot, ev):
         return
 
     if config.get("image_mode", True):
-        song_list = str(MessageSegment.image(render_song_list(songs)))
+        song_list = str(MessageSegment.image(render_song_list(songs, keyword)))
     else:
         lines = ["%d. %s -- %s -- %s" % (
             index, song["name"], song["artists"], song["album"]
