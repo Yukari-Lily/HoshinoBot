@@ -1,6 +1,7 @@
 FROM python:3.8-slim
 
 ENV PYTHONIOENCODING=utf-8 \
+    PYTHONUNBUFFERED=1 \
     TZ=Asia/Shanghai \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
@@ -21,4 +22,7 @@ RUN pip install -r /HoshinoBot/requirements.txt \
 
 COPY . /HoshinoBot
 
+RUN chmod +x /HoshinoBot/entrypoint.sh
+
+ENTRYPOINT ["/HoshinoBot/entrypoint.sh"]
 CMD ["python3", "run.py"]

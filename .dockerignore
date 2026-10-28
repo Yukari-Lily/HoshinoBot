@@ -1,1 +1,7 @@
 .git
+
+# 运行时配置：本地 config 可能含 SUPERUSERS/密钥，不应打进公开镜像；
+# 首次启动由 entrypoint 从 config_example 初始化
+hoshino/config/
+
+__pycache__/
