@@ -1,11 +1,14 @@
 {% extends "share/base.html" %}
+{% block page_title %}系统异常{% endblock %}
 {% block main %}
-    <div class="error">
-        <div class="error__content">
-            <h2>{% if statusCode %}{{ statusCode }}{% else %}500{% endif %}</h2>
-            <h3>Something went wrong!</h3>
-            <p>{{ msg }}</p>
-            <button type="button" class="btn btn-accent btn-pill">&larr; Go Back</button>
-        </div>
+<div class="card" style="max-width: 600px; margin: 40px auto; text-align: center; padding: 40px 24px;">
+    <div style="font-size: 64px; font-weight: 800; color: var(--danger); line-height: 1;">
+        {% if statusCode %}{{ statusCode }}{% else %}500{% endif %}
     </div>
+    <h2 style="font-size: 20px; font-weight: 700; margin: 16px 0 8px; color: var(--text-main);">操作遇到问题</h2>
+    <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 24px;">{{ msg or "发生未知异常，请稍后重试" }}</p>
+    <div>
+        <a href="{{ url_prefix }}/" class="btn btn-primary">返回控制台首页</a>
+    </div>
+</div>
 {% endblock %}

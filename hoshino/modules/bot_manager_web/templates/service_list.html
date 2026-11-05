@@ -1,11 +1,86 @@
-{% extends "share/article.html" %}
-{% block article %}
-<div class="form-row">
+{% extends "share/base.html" %}
+
+{% block page_title %}
+<span>按服务管理</span>
+{% endblock %}
+
+{% block main %}
+<!-- Flat Toolbar with Segmented Controls -->
+<div class="flat-toolbar">
+    <div style="display: flex; align-items: center; gap: 10px; flex: 1; flex-wrap: wrap;">
+        <div class="toolbar-search-wrap">
+            <svg class="toolbar-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="search-input" class="toolbar-search-input" placeholder="按服务名或模块搜索...">
+        </div>
+
+        <div class="segmented-control">
+            <button type="button" class="segmented-btn active" data-bundle="ALL">全部 (<span id="item-count-badge">{{ items | length }}</span>)</button>
+            {% for b in all_bundles %}
+            <button type="button" class="segmented-btn" data-bundle="{{ b }}">{{ b }}</button>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Services Grid -->
+<div class="cards-grid" id="services-container">
     {% for item in items %}
-    <div class="form-group col-sm-3">
-        <span class="form-control" style="font-size: 1.2rem"
-              onclick="window.location.href='{{ url_prefix }}/service/{{ item }}'">{{ item }}</span>
+    <div class="flat-item-card" data-bundle="{{ item.bundle }}">
+        <div class="item-main-info">
+            <div class="item-texts">
+                <h3 class="item-primary-title search-target" title="{{ item.name }}">{{ item.name }}</h3>
+                <div class="item-tags-row">
+                    <span class="badge badge-info">{{ item.bundle }}</span>
+                    {% if item.enable_on_default %}
+                    <span class="badge badge-default">默认开</span>
+                    {% else %}
+                    <span class="badge badge-default">默认关</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="item-action-row">
+            <span style="font-size: 12px; color: var(--text-secondary);">
+                开启: <strong style="color: var(--text-primary);">{{ item.enabled_groups_count }}</strong> / {{ item.total_groups_count }} 群
+            </span>
+            <a href="{{ url_prefix }}/service/{{ item.name }}" class="btn btn-secondary btn-sm">
+                <span>管理群</span>
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+            </a>
+        </div>
     </div>
     {% endfor %}
 </div>
+
+<!-- Empty State -->
+<div class="flat-empty-state" id="empty-state-wrap" style="display: none;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+    </svg>
+    <div class="flat-empty-title">未找到匹配的服务</div>
+    <div class="flat-empty-desc">请尝试调整搜索关键词或分类标签</div>
+</div>
+{% endblock %}
+
+{% block afterload %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        new FlatFilterEngine({
+            searchInputId: 'search-input',
+            cardSelector: '.flat-item-card',
+            filterChipSelector: '.segmented-btn',
+            countBadgeId: 'item-count-badge',
+            emptyStateId: 'empty-state-wrap',
+            bundleAttr: 'data-bundle',
+            searchFieldSelector: '.search-target'
+        });
+    });
+</script>
 {% endblock %}

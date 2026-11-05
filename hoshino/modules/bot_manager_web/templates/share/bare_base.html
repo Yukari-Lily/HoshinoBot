@@ -1,22 +1,13 @@
 <!doctype html>
-<html class="no-js h-100" lang="en">
+<html lang="zh-CN">
 <head>
-    <title>{% if title %}{{ title }}{% else %}bot{% endif %}</title>
+    <title>{% if title %}{{ title }} - {% endif %}HoshinoBot 控制台</title>
     {% include "share/imports.html" %}
     {% block imports %}{% endblock %}
 </head>
-<body class="h-100">
-<div></div>
-<div></div>
-<div class="container-fluid">
-    <div class="row">
-        <main class="main-content col-lg-10 col-md-9 col-sm-12 p-0 offset-lg-1 offset-md-1">
-            {% block main %}
-            {% endblock %}
-            {% include "share/main_footer.html" %}
-        </main>
-    </div>
-</div>
-{% block afterload %}{% endblock %}
+<body style="background-color: var(--bg-app);">
+    {% block main %}{% endblock %}
+    <div id="toast-container"></div>
+    {% block afterload %}{% endblock %}
 </body>
 </html>

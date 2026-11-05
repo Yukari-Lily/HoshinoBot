@@ -1,14 +1,94 @@
-{% extends "share/article.html" %}
-{% block article %}
-<div class="form-row">
+{% extends "share/base.html" %}
+
+{% block page_title %}
+<span>按群管理</span>
+{% endblock %}
+
+{% block main %}
+<!-- Flat Toolbar -->
+<div class="flat-toolbar">
+    <div style="display: flex; align-items: center; gap: 10px; flex: 1; flex-wrap: wrap;">
+        <div class="toolbar-search-wrap">
+            <svg class="toolbar-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="search-input" class="toolbar-search-input" placeholder="按群名或群号搜索...">
+        </div>
+        <span class="badge badge-default">共 <span id="item-count-badge">{{ items | length }}</span> 个群聊</span>
+    </div>
+
+    <div>
+        <a href="{{ url_prefix }}/group?refresh=1" class="btn btn-secondary btn-sm" title="强制向Bot刷新群列表">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <polyline points="1 20 1 14 7 14"></polyline>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+            <span>刷新列表</span>
+        </a>
+    </div>
+</div>
+
+<!-- Group Cards Grid -->
+<div class="cards-grid" id="groups-container">
     {% for item in items %}
-    <div class="form-group col-sm-3" style="font-size: 1.2rem"
-         onclick='window.location.href="{{ url_prefix }}/group/{{ item["group_id"] }}"'>
-        <div class="input-group">
-            <span class="input-group-append"><span class="input-group-text"><i> {{ item['group_id'] }}</i></span></span>
-            <span class="form-control">{{ item['group_name'] }}</span>
+    <div class="flat-item-card" data-gid="{{ item['group_id'] }}">
+        <div class="item-main-info">
+            <img class="group-mini-avatar"
+                 src="https://p.qlogo.cn/gh/{{ item['group_id'] }}/{{ item['group_id'] }}/100"
+                 alt="avatar"
+                 loading="lazy"
+                 onerror="this.onerror=null; this.outerHTML='<div class=\'detail-avatar-fallback\' style=\'width:38px;height:38px;font-size:14px;\'>群</div>';">
+            <div class="item-texts">
+                <h3 class="item-primary-title search-target" title="{{ item['group_name'] }}">{{ item['group_name'] }}</h3>
+                <div class="item-tags-row">
+                    <span class="badge badge-default search-target" onclick="copyText('{{ item['group_id'] }}', '已复制群号')" style="cursor: pointer;" title="点击复制群号">
+                        #{{ item['group_id'] }}
+                    </span>
+                    {% if item.get('enabled_count') is not none %}
+                    <span class="badge badge-success">
+                        {{ item['enabled_count'] }} / {{ item['total_count'] }} 开启
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="item-action-row">
+            <span style="font-size: 12px; color: var(--text-secondary);">配置群内功能</span>
+            <a href="{{ url_prefix }}/group/{{ item['group_id'] }}" class="btn btn-secondary btn-sm">
+                <span>进入配置</span>
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+            </a>
         </div>
     </div>
     {% endfor %}
 </div>
+
+<!-- Empty State -->
+<div class="flat-empty-state" id="empty-state-wrap" style="display: none;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+    </svg>
+    <div class="flat-empty-title">未找到匹配的群聊</div>
+    <div class="flat-empty-desc">请尝试调整搜索关键词</div>
+</div>
+{% endblock %}
+
+{% block afterload %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        new FlatFilterEngine({
+            searchInputId: 'search-input',
+            cardSelector: '.flat-item-card',
+            countBadgeId: 'item-count-badge',
+            emptyStateId: 'empty-state-wrap',
+            searchFieldSelector: '.search-target'
+        });
+    });
+</script>
 {% endblock %}

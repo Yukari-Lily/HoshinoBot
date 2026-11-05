@@ -1,91 +1,180 @@
-{% extends "share/article.html" %}
-{% block article %}
-<div class="form-row">
-    {% for key in conf[group_id] %}
-    <div class="form-group col-md-4 ">
-        <div class="input-group">
-            <span class="form-control">{{ key }}</span>
-            <button id="{{key}}" onclick="switcher('{{key}}')" class="switchButton">
-                {{ conf[group_id][key] }}
-            </button>
+{% extends "share/base.html" %}
+
+{% block page_title %}
+<a href="{{ url_prefix }}/group" style="color: var(--text-tertiary); display: inline-flex; align-items: center; margin-right: 6px;">
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+    </svg>
+</a>
+<span>群服务设置</span>
+{% endblock %}
+
+{% block main %}
+<!-- Flat Detail Banner -->
+<div class="flat-detail-banner">
+    <div class="detail-banner-header">
+        <div class="detail-title-group">
+            <img class="detail-avatar"
+                 src="https://p.qlogo.cn/gh/{{ group_id }}/{{ group_id }}/100"
+                 alt="avatar"
+                 onerror="this.onerror=null; this.outerHTML='<div class=\'detail-avatar-fallback\'>群</div>';">
+            <div class="detail-headings">
+                <h1>{{ group_info.group_name | default("群 " ~ group_id) }}</h1>
+                <div class="detail-meta-row">
+                    <span class="badge badge-default" onclick="copyText('{{ group_id }}', '已复制群号')" style="cursor: pointer;" title="点击复制群号">
+                        #{{ group_id }}
+                    </span>
+                    <span>共 {{ services_data | length }} 个服务</span>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+            <a href="{{ url_prefix }}/group" class="btn btn-secondary btn-sm">返回群列表</a>
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-save-top">已是最新</button>
+        </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="detail-progress-section">
+        <div class="progress-labels">
+            <span>开启覆盖率</span>
+            <span id="progress-text">计算中...</span>
+        </div>
+        <div class="progress-track">
+            <div class="progress-fill-bar" id="progress-fill" style="width: 0%;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Flat Toolbar with Segmented Controls -->
+<div class="flat-toolbar">
+    <div style="display: flex; align-items: center; gap: 10px; flex: 1; flex-wrap: wrap;">
+        <div class="toolbar-search-wrap">
+            <svg class="toolbar-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="search-input" class="toolbar-search-input" placeholder="按服务名搜索...">
+        </div>
+
+        <!-- Segmented Control for Bundles -->
+        <div class="segmented-control">
+            <button type="button" class="segmented-btn active" data-bundle="ALL">全部 (<span id="item-count-badge">{{ services_data | length }}</span>)</button>
+            {% for b in all_bundles %}
+            <button type="button" class="segmented-btn" data-bundle="{{ b }}">{{ b }}</button>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-all-on" title="开启当前筛选出的服务">全开</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-all-off" title="关闭当前筛选出的服务">全关</button>
+    </div>
+</div>
+
+<!-- Services Grid -->
+<div class="cards-grid" id="services-container">
+    {% for item in services_data %}
+    <div class="flat-item-card" id="card-{{ item.name }}" data-bundle="{{ item.bundle }}">
+        <div class="item-main-info">
+            <div class="item-texts">
+                <h3 class="item-primary-title search-target" title="{{ item.name }}">{{ item.name }}</h3>
+                <div class="item-tags-row">
+                    <span class="badge badge-info">{{ item.bundle }}</span>
+                    {% if item.enable_on_default %}
+                    <span class="badge badge-default">默认开</span>
+                    {% else %}
+                    <span class="badge badge-default">默认关</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="item-action-row">
+            <div class="status-label-pill">
+                <span class="status-indicator-dot" id="dot-{{ item.name }}" style="background-color: {% if item.enabled %}var(--success){% else %}var(--border-strong){% endif %};"></span>
+                <span id="label-{{ item.name }}" style="color: {% if item.enabled %}var(--success-text){% else %}var(--text-tertiary){% endif %};">
+                    {% if item.enabled %}开启{% else %}关闭{% endif %}
+                </span>
+            </div>
+
+            <label class="flat-switch-wrap" for="switch-{{ item.name }}">
+                <div class="flat-switch">
+                    <input type="checkbox"
+                           id="switch-{{ item.name }}"
+                           data-item-key="{{ item.name }}"
+                           {% if item.enabled %}checked{% endif %}>
+                    <span class="flat-slider"></span>
+                </div>
+            </label>
         </div>
     </div>
     {% endfor %}
 </div>
-<div class="form-row">
-    <button onclick="onAll()" class="switchButton">全开</button>
-    <!-- &emsp; -->
-    <button onclick="offAll()" class="switchButton">全关</button>
-    <!-- &emsp; -->
-    <button onclick="save()" class="switchButton">保存</button>
+
+<!-- Empty State -->
+<div class="flat-empty-state" id="empty-state-wrap" style="display: none;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+    </svg>
+    <div class="flat-empty-title">未找到匹配的服务</div>
+    <div class="flat-empty-desc">请尝试调整搜索关键词或分类标签</div>
 </div>
 
+<!-- Floating Save Pill Banner -->
+<div class="floating-save-banner" id="floating-save-banner">
+    <div class="save-banner-text">
+        <span>已修改</span>
+        <span class="dirty-count-badge" id="dirty-count-badge">0</span>
+        <span>项设置未保存</span>
+    </div>
+    <div class="save-banner-actions">
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-discard-floating" style="border: none; background: rgba(255,255,255,0.15); color: #fff;">放弃</button>
+        <button type="button" class="btn-pill-save" id="btn-save-floating">保存修改</button>
+    </div>
+</div>
 {% endblock %}
+
 {% block afterload %}
 <script>
-    const conf = JSON.parse('{{conf|tojson}}');
-    let gid_str = '{{group_id}}';
-    for (const key in conf[gid_str]) {
-        console.log(key);
-        if (conf[gid_str][key]) {
-            document.getElementById(key).innerText = '开';
-            document.getElementById(key).className = 'switchButton on';
-        } else {
-            document.getElementById(key).innerText = '关';
-            document.getElementById(key).className = 'switchButton off';
-        }
-    }
+    document.addEventListener('DOMContentLoaded', () => {
+        const conf = JSON.parse('{{ conf | tojson }}');
+        const groupId = '{{ group_id }}';
+        const saveUrl = '{{ url_prefix }}/set';
 
-    function save() {
-        const url = '{{ url_prefix }}/set';
-        const request = new XMLHttpRequest();
-        request.onload = function () {
-            if (request.status === 200) {
-                alert('设置成功');
-            } else {
-                alert('exception');
-            }
-        };
+        const filterEngine = new FlatFilterEngine({
+            searchInputId: 'search-input',
+            cardSelector: '.flat-item-card',
+            filterChipSelector: '.segmented-btn',
+            countBadgeId: 'item-count-badge',
+            emptyStateId: 'empty-state-wrap',
+            bundleAttr: 'data-bundle',
+            searchFieldSelector: '.search-target'
+        });
 
-        request.open('POST', url);
-        request.send(JSON.stringify(conf));
-    }
+        const switchMgr = new FlatSwitchManager({
+            conf: conf,
+            targetKey: groupId,
+            mode: 'group_services',
+            saveUrl: saveUrl,
+            topSaveBtnId: 'btn-save-top',
+            floatingSaveBtnId: 'btn-save-floating',
+            floatingBannerId: 'floating-save-banner',
+            progressFillId: 'progress-fill',
+            progressTextId: 'progress-text',
+            filterEngine: filterEngine
+        });
 
-    function set_conf(sv_name, is_enable) {
-        conf[gid_str][sv_name] = is_enable;
-        if (is_enable) {
-            document.getElementById(sv_name).innerText = '开';
-            document.getElementById(sv_name).className = 'switchButton on';
-        } else {
-            document.getElementById(sv_name).innerText = '关';
-            document.getElementById(sv_name).className = 'switchButton off';
-        }
-    }
+        document.getElementById('btn-all-on').addEventListener('click', () => {
+            switchMgr.setAllVisible(true);
+        });
 
-    function switcher(sv_name) {
-        const old_status = conf[gid_str][sv_name];
-        const new_status = (old_status + 1) % 2;
-        set_conf(sv_name, Boolean(new_status));
-    }
-
-    function onAll() {
-        for (const sv_name in conf[gid_str]) {
-            if (conf[gid_str][sv_name] === false) {
-                conf[gid_str][sv_name] = true;
-                document.getElementById(sv_name).innerText = '开';
-                document.getElementById(sv_name).className = 'switchButton on';
-            }
-        }
-    }
-
-    function offAll() {
-        for (const sv_name in conf[gid_str]) {
-            if (conf[gid_str][sv_name] === true) {
-                conf[gid_str][sv_name] = false;
-                document.getElementById(sv_name).innerText = '关';
-                document.getElementById(sv_name).className = 'switchButton off';
-            }
-        }
-    }
+        document.getElementById('btn-all-off').addEventListener('click', () => {
+            switchMgr.setAllVisible(false);
+        });
+    });
 </script>
 {% endblock %}

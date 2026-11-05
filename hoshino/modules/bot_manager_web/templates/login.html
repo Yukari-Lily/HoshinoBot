@@ -1,80 +1,68 @@
 {% extends "share/bare_base.html" %}
-{% block imports %}
-    <script src="{{ url_prefix }}{{ static_url_path }}/scripts/form.js"></script>
-    <link rel="stylesheet" href="{{ url_prefix }}{{ static_url_path }}/styles/form.css">
-{% endblock %}
 {% block main %}
-<div class="main-content-container container-fluid px-4">
-    {% include "share/main_header.html" %}
-    <div class="row">
-        <div class="col-lg-6 m-auto">
-            <div class="card card-small mb-4">
-                <div class="card-header border-bottom">
-                    <h6 class="m-0" id="msg">登录</h6>
-                </div>
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item p-3">
-                        <div class="row">
-                            <div class="col">
-                                <form method="POST" onsubmit="return checkForm()">
-                                    <div class="form-row">
-                                        <div hidden class="form-group col-md-6 col-lg-12">
-                                            <label for="username" class="addRedStar">用户名</label>
-                                            <input type="text" class="form-control"
-                                                   id="username"
-                                                   name="username"
-                                                   placeholder="username"
-                                                   value="">
-                                        </div>
-                                        <div class="form-group col-md-6 col-lg-12">
-                                            <label for="password" class="addRedStar">密码</label>
-                                            <input type="password" class="form-control"
-                                                   id="password"
-                                                   name="password"
-                                                   placeholder="password"
-                                                   value="">
-                                        </div>
-                                        <input type="hidden" id="next" name="next" value="">
-                                    </div>
-                                    <div class="form-row">
-                                        <button type="submit" class="btn btn-accent">登录</button>
-                                        <span hidden class="btn btn-accent"
-                                              onclick="window.location.href='/accounts/registry/'">注册</span>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </li>
-                </ul>
+<div class="flat-login-container">
+    <div class="flat-login-card">
+        <div class="flat-login-header">
+            <div class="flat-login-logo">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                    <polyline points="2 17 12 22 22 17"></polyline>
+                    <polyline points="2 12 12 17 22 12"></polyline>
+                </svg>
             </div>
+            <h1 class="flat-login-title">HoshinoBot 控制台</h1>
+            <p class="flat-login-subtitle">请输入管理员访问密码以登录</p>
         </div>
+
+        {% if error %}
+        <div class="flat-error-alert">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span>访问密码错误，请重新输入</span>
+        </div>
+        {% endif %}
+
+        <form class="flat-form" method="POST" action="{{ url_prefix }}/login">
+            <div class="flat-form-field">
+                <label class="flat-form-label" for="password">控制台密码</label>
+                <div class="flat-input-wrap">
+                    <input type="password" id="password" name="password" class="flat-text-input" placeholder="输入面板密码" required autofocus>
+                    <button type="button" class="pwd-toggle-btn" id="toggle-pwd-btn" title="查看密码">
+                        <svg id="eye-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <input type="hidden" name="next" id="next-input" value="">
+            <button type="submit" class="btn btn-primary" style="width: 100%; height: 38px; font-weight: 600;">登 录</button>
+        </form>
     </div>
 </div>
 {% endblock %}
+
 {% block afterload %}
-    <script type="text/javascript">
-        $(document).ready(function () {
-            const queryString = window.location.search;
-            const urlParams = new URLSearchParams(queryString);
-            if (urlParams.has("next")) {
-                $("#next").val(urlParams.get("next"))
-            }
-        });
-
-        function checkUsername() {
-            if ($("#username").val().length === 0) {
-                set_msg("用户名不能为空");
-                return false;
-            }
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('next')) {
+            document.getElementById('next-input').value = urlParams.get('next');
         }
 
-        function checkForm() {
-            cleanErrorMsg();
-            let check_result = true;
-            // if (!checkText("username")) check_result = false;
-            if (!checkText("password")) check_result = false;
-            return check_result;
+        const pwdInput = document.getElementById('password');
+        const toggleBtn = document.getElementById('toggle-pwd-btn');
+        if (toggleBtn && pwdInput) {
+            toggleBtn.addEventListener('click', () => {
+                const isPassword = pwdInput.getAttribute('type') === 'password';
+                pwdInput.setAttribute('type', isPassword ? 'text' : 'password');
+                toggleBtn.style.color = isPassword ? 'var(--primary)' : 'var(--text-tertiary)';
+            });
         }
-
-    </script>
+    });
+</script>
 {% endblock %}

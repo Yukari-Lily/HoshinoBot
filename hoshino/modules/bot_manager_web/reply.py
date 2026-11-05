@@ -4,7 +4,7 @@ from hoshino.config import HOST, PORT
 # bot manager web 面板外网地址：从 hoshino/config/bot_manager_web.yaml 读取，留空则用 HOST:PORT
 from hoshino.util import load_yaml_config
 _bw_cfg = load_yaml_config('bot_manager_web')
-PUBLIC_ADDRESS = _bw_cfg.get('public_address') or f'http://{HOST}:{PORT}'
+PUBLIC_ADDRESS = (_bw_cfg.get('public_address') or f'http://{HOST}:{PORT}').rstrip('/')
 
 bot = nonebot.get_bot()
 

@@ -1,19 +1,14 @@
 {% extends "share/base.html" %}
+{% block page_title %}{{ msg | default("数据列表") }}{% endblock %}
 {% block main %}
-<div class="main-content-container container-fluid px-4">
-    {% include "share/main_header.html" %}
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="card card-small mb-4">
-                <div class="card-header border-bottom">
-                    <h6 class="m-0" id="msg">{{ msg }}</h6>
-                </div>
-                <div class="card-body p-0 pb-3 text-center">
-                    {% block table %}
-                    {% endblock %}
-                </div>
-            </div>
-        </div>
+<div class="card">
+    {% if msg %}
+    <div class="card-header">
+        <h3 class="card-title">{{ msg }}</h3>
+    </div>
+    {% endif %}
+    <div class="card-body">
+        {% block table %}{% endblock %}
     </div>
 </div>
 {% endblock %}

@@ -1,29 +1,14 @@
 {% extends "share/base.html" %}
+{% block page_title %}{{ article_title | default("服务管理") }}{% endblock %}
 {% block main %}
-<div class="main-content-container container-fluid px-4">
-    {% include "share/main_header.html" %}
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="card card-small mb-4">
-                <div class="card-header border-bottom">
-                    <h6 class="m-0" id="msg">{% if article_title %}{{ article_title }}{% endif %}</h6>
-                </div>
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item p-3">
-                        <div class="row center-block text-center">
-                            <div class="col">
-                                {% block article %}
-                                <form method="POST">
-                                    <button type="submit" class="btn btn-accent">
-                                    </button>
-                                </form>
-                                {% endblock %}
-                            </div>
-                        </div>
-                    </li>
-                </ul>
-            </div>
-        </div>
+<div class="card">
+    {% if article_title %}
+    <div class="card-header">
+        <h3 class="card-title">{{ article_title }}</h3>
+    </div>
+    {% endif %}
+    <div class="card-body">
+        {% block article %}{% endblock %}
     </div>
 </div>
 {% endblock %}
