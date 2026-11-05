@@ -43,4 +43,5 @@ MODULES_ON = {
     'wplace_alerter',
     'music_voice',
     'bili_parser',
+    'daily_news',
 }
