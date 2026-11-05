@@ -5,3 +5,12 @@ delimiter: "------"
 
 # false 时无需完整链接，消息中的 AV/BV 号也会被解析
 video_full_url: false
+
+# 是否将 B 站动态直接渲染为长图卡片发送（默认 true）
+render_dynamic_as_image: true
+
+# 动态卡片图片宽度（默认 800）
+card_width: 800
+
+# 正文与专栏摘要截断长度（默认 200 字，0 为不截断）
+max_text_len: 200

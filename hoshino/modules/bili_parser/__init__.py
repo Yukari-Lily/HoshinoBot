@@ -9,6 +9,9 @@ DEFAULT_CONFIG = {
     "parse_limit": 3,
     "delimiter": "------",
     "video_full_url": False,
+    "render_dynamic_as_image": True,
+    "card_width": 800,
+    "max_text_len": 200,
 }
 config = DEFAULT_CONFIG.copy()
 config.update(load_yaml_config("bili_parser", {}))
@@ -34,6 +37,9 @@ async def bili_parser(bot, ev):
         content,
         parse_limit=int(config["parse_limit"]),
         video_full_url=bool(config["video_full_url"]),
+        render_dynamic_as_image=bool(config.get("render_dynamic_as_image", True)),
+        card_width=int(config.get("card_width", 800)),
+        max_text_len=int(config.get("max_text_len", 200)),
     )
     if not results:
         return
