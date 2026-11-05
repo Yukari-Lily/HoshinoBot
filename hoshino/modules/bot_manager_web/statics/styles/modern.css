@@ -1,37 +1,39 @@
-/* HoshinoBot Web Manager - Modern Flat Design System */
+/* HoshinoBot Web Manager - Modern Flat Dark Mode */
 :root {
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
-  --primary-light: #eff6ff;
-  --primary-border: #bfdbfe;
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --primary-light: rgba(59, 130, 246, 0.15);
+  --primary-border: rgba(59, 130, 246, 0.35);
   
-  --dark: #0f172a;
-  --dark-hover: #1e293b;
+  --dark: #f4f4f5;
+  --dark-hover: #ffffff;
+  --dark-text: #09090b;
   
   --success: #10b981;
-  --success-text: #047857;
-  --success-light: #ecfdf5;
-  --success-border: #a7f3d0;
+  --success-text: #34d399;
+  --success-light: rgba(16, 185, 129, 0.15);
+  --success-border: rgba(16, 185, 129, 0.35);
   
-  --danger: #ef4444;
-  --danger-light: #fef2f2;
-  --danger-border: #fecaca;
+  --danger: #f87171;
+  --danger-light: rgba(239, 68, 68, 0.15);
+  --danger-border: rgba(239, 68, 68, 0.35);
   
-  --warning: #f59e0b;
-  --warning-light: #fffbeb;
+  --warning: #fbbf24;
+  --warning-light: rgba(245, 158, 11, 0.15);
   
-  --bg-app: #f8fafc;
-  --bg-surface: #ffffff;
-  --bg-subtle: #f1f5f9;
-  --bg-hover: #f8fafc;
+  /* Dark Mode Palette */
+  --bg-app: #09090b;
+  --bg-surface: #121215;
+  --bg-subtle: #1c1c21;
+  --bg-hover: #22222a;
   
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-tertiary: #94a3b8;
+  --text-primary: #f4f4f5;
+  --text-secondary: #a1a1aa;
+  --text-tertiary: #71717a;
   
-  --border: #e2e8f0;
-  --border-strong: #cbd5e1;
-  --border-focus: #93c5fd;
+  --border: #27272a;
+  --border-strong: #3f3f46;
+  --border-focus: #60a5fa;
   
   --radius-xs: 4px;
   --radius-sm: 6px;
@@ -49,6 +51,10 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+}
+
+html, body {
+  color-scheme: dark;
 }
 
 body {
@@ -72,7 +78,7 @@ a {
   min-height: 100vh;
 }
 
-/* Flat Light Sidebar */
+/* Flat Dark Sidebar */
 .app-sidebar {
   width: var(--sidebar-width);
   background-color: var(--bg-surface);
@@ -99,7 +105,7 @@ a {
 .sidebar-logo-icon {
   width: 32px;
   height: 32px;
-  background-color: var(--dark);
+  background-color: var(--primary);
   color: #ffffff;
   border-radius: var(--radius-sm);
   display: flex;
@@ -181,7 +187,7 @@ a {
 
 .nav-link.active {
   background-color: var(--bg-subtle);
-  color: var(--primary);
+  color: #ffffff;
   font-weight: 600;
 }
 
@@ -212,6 +218,7 @@ a {
   height: 7px;
   border-radius: 50%;
   background-color: var(--success);
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
 }
 
 .logout-link {
@@ -236,7 +243,7 @@ a {
   min-height: 100vh;
 }
 
-/* Flat Top Navigation Header */
+/* Flat Dark Header */
 .app-header {
   height: var(--header-height);
   background-color: var(--bg-surface);
@@ -303,7 +310,7 @@ a {
   margin: 0 auto;
 }
 
-/* Flat Clean Cards */
+/* Flat Clean Dark Cards */
 .flat-card {
   background-color: var(--bg-surface);
   border: 1px solid var(--border);
@@ -392,8 +399,8 @@ a {
 }
 
 .flat-action-tile:hover {
-  border-color: var(--primary);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.06);
+  border-color: var(--border-strong);
+  background-color: var(--bg-subtle);
 }
 
 .tile-top {
@@ -423,6 +430,7 @@ a {
   background-color: var(--bg-subtle);
   padding: 3px;
   border-radius: var(--radius-md);
+  border: 1px solid var(--border);
   gap: 2px;
   overflow-x: auto;
   max-width: 100%;
@@ -446,10 +454,9 @@ a {
 }
 
 .segmented-btn.active {
-  background-color: var(--bg-surface);
-  color: var(--text-primary);
+  background-color: var(--border-strong);
+  color: #ffffff;
   font-weight: 600;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 /* Toolbar */
@@ -488,7 +495,6 @@ a {
 
 .toolbar-search-input:focus {
   border-color: var(--primary);
-  background-color: var(--bg-surface);
   box-shadow: 0 0 0 2px var(--primary-light);
 }
 
@@ -503,7 +509,7 @@ a {
   pointer-events: none;
 }
 
-/* Flat Buttons */
+/* Flat Buttons (High Contrast in Dark Mode) */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -527,7 +533,7 @@ a {
 
 .btn-primary {
   background-color: var(--dark);
-  color: #ffffff;
+  color: var(--dark-text);
 }
 .btn-primary:hover {
   background-color: var(--dark-hover);
@@ -542,13 +548,14 @@ a {
 }
 
 .btn-secondary {
-  background-color: var(--bg-surface);
+  background-color: var(--bg-subtle);
   border-color: var(--border);
   color: var(--text-primary);
 }
 .btn-secondary:hover {
-  background-color: var(--bg-subtle);
+  background-color: var(--border-strong);
   border-color: var(--border-strong);
+  color: #ffffff;
 }
 
 .btn-sm {
@@ -583,7 +590,7 @@ a {
 
 .badge-info {
   background-color: var(--primary-light);
-  color: var(--primary);
+  color: #60a5fa;
   border-color: var(--primary-border);
 }
 
@@ -701,11 +708,12 @@ a {
 
 .flat-item-card:hover {
   border-color: var(--border-strong);
+  background-color: var(--bg-subtle);
 }
 
 .flat-item-card.is-dirty {
   border-color: var(--primary);
-  background-color: #fafbfc;
+  background-color: rgba(59, 130, 246, 0.08);
 }
 
 .item-main-info {
@@ -807,10 +815,10 @@ a {
   width: 16px;
   left: 3px;
   bottom: 3px;
-  background-color: #ffffff;
+  background-color: #f4f4f5;
   border-radius: 50%;
   transition: var(--transition);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .flat-switch input:checked + .flat-slider {
@@ -821,20 +829,21 @@ a {
   transform: translateX(18px);
 }
 
-/* Floating Save Banner (Bottom Pill) */
+/* Floating Save Banner (Bottom Pill in Dark Mode) */
 .floating-save-banner {
   position: fixed;
   bottom: 24px;
   left: 50%;
   transform: translateX(-50%) translateY(120px);
-  background-color: var(--dark);
-  color: #ffffff;
+  background-color: #18181b;
+  border: 1px solid var(--border-strong);
+  color: #f4f4f5;
   border-radius: var(--radius-full);
   padding: 8px 10px 8px 18px;
   display: flex;
   align-items: center;
   gap: 14px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
   z-index: 100;
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
   opacity: 0;
@@ -874,7 +883,7 @@ a {
   height: 32px;
   padding: 0 14px;
   background-color: var(--success);
-  color: #ffffff;
+  color: #09090b;
   border: none;
   border-radius: var(--radius-full);
   font-size: 12.5px;
@@ -900,12 +909,12 @@ a {
 
 .toast {
   pointer-events: auto;
-  background-color: var(--bg-surface);
+  background-color: #18181b;
   color: var(--text-primary);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
   padding: 10px 14px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -933,7 +942,7 @@ a {
 .toast-error .toast-icon { color: var(--danger); }
 .toast-info .toast-icon { color: var(--primary); }
 
-/* Minimalist Flat Login */
+/* Minimalist Flat Dark Login */
 .flat-login-container {
   min-height: 100vh;
   display: flex;
@@ -950,7 +959,7 @@ a {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 32px 28px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 .flat-login-header {
@@ -961,7 +970,7 @@ a {
 .flat-login-logo {
   width: 44px;
   height: 44px;
-  background-color: var(--dark);
+  background-color: var(--primary);
   color: #ffffff;
   border-radius: var(--radius-sm);
   margin: 0 auto 14px;
@@ -1013,7 +1022,7 @@ a {
   font-size: 13.5px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  background-color: var(--bg-surface);
+  background-color: var(--bg-app);
   color: var(--text-primary);
   outline: none;
   transition: var(--transition);
@@ -1079,7 +1088,7 @@ a {
   display: none;
   position: fixed;
   inset: 0;
-  background-color: rgba(15, 23, 42, 0.4);
+  background-color: rgba(0, 0, 0, 0.7);
   z-index: 45;
 }
 
