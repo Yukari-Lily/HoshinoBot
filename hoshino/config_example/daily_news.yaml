@@ -8,3 +8,9 @@ send_mode: "image"
 
 # 多群广播时各群发送间隔秒数 (防风控)
 broadcast_interval: 1.0
+
+# 新闻数据 API 接口列表 (按顺序容灾重试，支持多源保障可用性)
+# api_urls:
+#   - "https://60s.viki.moe/v2/60s"
+#   - "https://api.guiguiya.com/api/60s?type=json"
+#   - "https://60s-api.viki.moe/v2/60s"

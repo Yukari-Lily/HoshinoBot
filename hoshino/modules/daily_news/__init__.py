@@ -9,6 +9,11 @@ DEFAULT_CONFIG = {
     "push_time": "08:00",
     "send_mode": "image",
     "broadcast_interval": 1.0,
+    "api_urls": [
+        "https://60s.viki.moe/v2/60s",
+        "https://api.guiguiya.com/api/60s?type=json",
+        "https://60s-api.viki.moe/v2/60s",
+    ],
 }
 
 config = DEFAULT_CONFIG.copy()
