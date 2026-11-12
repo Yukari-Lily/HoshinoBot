@@ -3,6 +3,7 @@ import json
 import logging
 import time
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Set, Tuple
+from urllib.parse import quote, urlencode
 
 import aiohttp
 
@@ -13,24 +14,8 @@ _REST_TIMEOUT = aiohttp.ClientTimeout(total=30, sock_connect=10)
 _WS_TIMEOUT = aiohttp.ClientTimeout(total=None, sock_connect=10, sock_read=None)
 _WS_FAIL_RELOGIN = 5  # 连续失败这么多次后抛出，让外层 daemon 重新 login
 
-_ITEM_FIELDS = ",".join(
-    [
-        "SeriesId",
-        "SeriesName",
-        "SeasonId",
-        "ParentId",
-        "ParentIndexNumber",
-        "IndexNumber",
-        "ProductionYear",
-        "RunTimeTicks",
-        "Overview",
-        "Path",
-        "Album",
-        "AlbumArtist",
-        "Artists",
-        "MediaType",
-    ]
-)
+# 仅传 Jellyfin ItemFields 枚举中的扩展字段；其余基础属性在 BaseItemDto 中默认返回
+_ITEM_FIELDS = ",".join(["ParentId", "Overview", "Path"])
 
 
 def _to_hhmmss(ticks) -> str:
@@ -141,15 +126,13 @@ class RealtimeItemAdded:
         return None
 
     def _auth_headers(self) -> Dict[str, str]:
-        headers = {
-            "X-Emby-Authorization": (
-                f'MediaBrowser Client="{self.client}", Device="{self.device}", '
-                f'DeviceId="{self.device}", Version="{self.version}"'
-            )
-        }
+        auth = (
+            f'MediaBrowser Client="{self.client}", Device="{self.device}", '
+            f'DeviceId="{self.device}", Version="{self.version}"'
+        )
         if self.token:
-            headers["X-Emby-Token"] = self.token
-        return headers
+            auth += f', Token="{self.token}"'
+        return {"Authorization": auth}
 
     # ---- lifecycle ----
 
@@ -170,14 +153,19 @@ class RealtimeItemAdded:
         self._http = None
 
     async def login(self):
+        self.token = None
         await self._ensure_http()
         assert self._http is not None
-        # re-create session after token so default headers carry X-Emby-Token
+        password = "" if self.cfg.get("password") is None else str(self.cfg.get("password"))
+        # re-create session after token so default headers carry Authorization Token
         async with self._http.post(
             f"{self.server}/Users/AuthenticateByName",
             headers=self._auth_headers(),
-            json={"Username": self.cfg["username"], "Pw": self.cfg["password"]},
+            json={"Username": str(self.cfg["username"]), "Pw": password},
         ) as resp:
+            if resp.status >= 400:
+                body = await resp.text()
+                self.logger.error("Jellyfin 登录失败 (%s): %s", resp.status, body[:500])
             resp.raise_for_status()
             data = await resp.json(content_type=None)
         self.token = data["AccessToken"]
@@ -565,7 +553,11 @@ class RealtimeItemAdded:
             ws_url = "wss://" + ws_url[len("https://"):]
         elif ws_url.startswith("http://"):
             ws_url = "ws://" + ws_url[len("http://"):]
-        return ws_url.rstrip("/") + f"/socket?api_key={self.token}"
+        query = urlencode(
+            {"ApiKey": self.token or "", "deviceId": self.device},
+            quote_via=quote,
+        )
+        return ws_url.rstrip("/") + f"/socket?{query}"
 
     async def run_ws(self):
         await self._ensure_http()
