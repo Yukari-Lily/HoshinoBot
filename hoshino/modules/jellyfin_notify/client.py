@@ -9,13 +9,51 @@ import aiohttp
 
 SendFunc = Callable[[Dict[str, Any]], Awaitable[None]]
 
-# REST 短超时；WebSocket 长连接不能带 total/sock_read 上限，否则约 30s 会被掐断
+# REST 每次请求单独传短超时；ClientSession 不设 total/sock_read 上限，避免误掐断 WebSocket 长连接
 _REST_TIMEOUT = aiohttp.ClientTimeout(total=30, sock_connect=10)
-_WS_TIMEOUT = aiohttp.ClientTimeout(total=None, sock_connect=10, sock_read=None)
+_SESSION_TIMEOUT = aiohttp.ClientTimeout(total=None, sock_connect=10, sock_read=None)
 _WS_FAIL_RELOGIN = 5  # 连续失败这么多次后抛出，让外层 daemon 重新 login
+_WS_KEEPALIVE_DEFAULT = 25.0
+_WS_KEEPALIVE_MIN = 1.0
+_WS_KEEPALIVE_MAX = 25.0
 
 # 仅传 Jellyfin ItemFields 枚举中的扩展字段；其余基础属性在 BaseItemDto 中默认返回
 _ITEM_FIELDS = ",".join(["ParentId", "Overview", "Path"])
+
+
+def _calc_keepalive_interval(raw_timeout: Any) -> float:
+    try:
+        val = float(raw_timeout)
+    except (TypeError, ValueError):
+        return _WS_KEEPALIVE_DEFAULT
+    if val <= 0:
+        return _WS_KEEPALIVE_DEFAULT
+    return max(_WS_KEEPALIVE_MIN, min(val / 2.0, _WS_KEEPALIVE_MAX))
+
+
+async def _send_ws_keepalive(ws: aiohttp.ClientWebSocketResponse):
+    if not ws.closed:
+        await ws.send_str(json.dumps({"MessageType": "KeepAlive"}))
+
+
+async def _ws_keepalive_loop(
+    ws: aiohttp.ClientWebSocketResponse,
+    interval_box: List[float],
+    wake: asyncio.Event,
+):
+    while not ws.closed:
+        try:
+            await asyncio.wait_for(wake.wait(), timeout=interval_box[0])
+            wake.clear()
+            continue
+        except asyncio.TimeoutError:
+            pass
+        if ws.closed:
+            break
+        try:
+            await _send_ws_keepalive(ws)
+        except Exception:
+            break
 
 
 def _to_hhmmss(ticks) -> str:
@@ -138,7 +176,7 @@ class RealtimeItemAdded:
 
     async def _ensure_http(self):
         if self._http is None or self._http.closed:
-            self._http = aiohttp.ClientSession(timeout=_REST_TIMEOUT, headers=self._auth_headers())
+            self._http = aiohttp.ClientSession(timeout=_SESSION_TIMEOUT, headers=self._auth_headers())
 
     async def close(self):
         if self._flush_task and not self._flush_task.done():
@@ -162,6 +200,7 @@ class RealtimeItemAdded:
             f"{self.server}/Users/AuthenticateByName",
             headers=self._auth_headers(),
             json={"Username": str(self.cfg["username"]), "Pw": password},
+            timeout=_REST_TIMEOUT,
         ) as resp:
             if resp.status >= 400:
                 body = await resp.text()
@@ -171,7 +210,7 @@ class RealtimeItemAdded:
         self.token = data["AccessToken"]
         await self._http.close()
         self._http = aiohttp.ClientSession(
-            timeout=_REST_TIMEOUT,
+            timeout=_SESSION_TIMEOUT,
             headers=self._auth_headers(),
         )
         self.logger.info("已连接到 Jellyfin: %s", self.server)
@@ -187,6 +226,7 @@ class RealtimeItemAdded:
             async with self._http.get(
                 f"{self.server}/Items",
                 params={"ids": ",".join(ids), "enableImages": "true", "fields": _ITEM_FIELDS},
+                timeout=_REST_TIMEOUT,
             ) as resp:
                 resp.raise_for_status()
                 data = await resp.json(content_type=None)
@@ -203,7 +243,10 @@ class RealtimeItemAdded:
         await self._ensure_http()
         assert self._http is not None
         try:
-            async with self._http.get(f"{self.server}/Items/{item_key}/Ancestors") as resp:
+            async with self._http.get(
+                f"{self.server}/Items/{item_key}/Ancestors",
+                timeout=_REST_TIMEOUT,
+            ) as resp:
                 resp.raise_for_status()
                 arr = await resp.json(content_type=None) or []
             self._ancestors_cache[item_key] = arr
@@ -567,30 +610,65 @@ class RealtimeItemAdded:
         while True:
             try:
                 async with self._http.ws_connect(
-                    self._ws_url(), heartbeat=30, timeout=_WS_TIMEOUT
+                    self._ws_url(), heartbeat=30
                 ) as ws:
+                    connected_at = time.monotonic()
+                    self.logger.info("Jellyfin WebSocket 已连接")
+                    await _send_ws_keepalive(ws)
+                    interval_box = [_WS_KEEPALIVE_DEFAULT]
+                    wake = asyncio.Event()
+                    keepalive_task = asyncio.create_task(
+                        _ws_keepalive_loop(ws, interval_box, wake)
+                    )
+                    try:
+                        async for msg in ws:
+                            if msg.type == aiohttp.WSMsgType.TEXT:
+                                try:
+                                    data = json.loads(msg.data)
+                                except Exception:
+                                    continue
+                                msg_type = data.get("MessageType") or data.get("message_type")
+                                if msg_type == "ForceKeepAlive":
+                                    raw_timeout = data.get("Data") if "Data" in data else data.get("data")
+                                    interval_box[0] = _calc_keepalive_interval(raw_timeout)
+                                    await _send_ws_keepalive(ws)
+                                    wake.set()
+                                    continue
+                                if msg_type == "KeepAlive":
+                                    await _send_ws_keepalive(ws)
+                                    continue
+                                if msg_type != "LibraryChanged":
+                                    continue
+                                body = data.get("Data") or data.get("data") or {}
+                                items_added = body.get("ItemsAdded") or body.get("items_added") or []
+                                ids_added = list(dict.fromkeys([i for i in items_added if i]))
+                                if not ids_added:
+                                    continue
+                                items = await self.get_items_by_ids(ids_added)
+                                if items:
+                                    await self._handle_items(items)
+                            elif msg.type in (aiohttp.WSMsgType.CLOSED, aiohttp.WSMsgType.ERROR):
+                                break
+                    finally:
+                        keepalive_task.cancel()
+                        try:
+                            await keepalive_task
+                        except (asyncio.CancelledError, Exception):
+                            pass
+
+                lived = time.monotonic() - connected_at
+                if lived >= 30:
                     backoff = 1
                     fails = 0
-                    self.logger.info("Jellyfin WebSocket 已连接")
-                    await ws.send_str(json.dumps({"MessageType": "KeepAlive"}))
-                    async for msg in ws:
-                        if msg.type == aiohttp.WSMsgType.TEXT:
-                            try:
-                                data = json.loads(msg.data)
-                            except Exception:
-                                continue
-                            if (data.get("MessageType") or data.get("message_type")) != "LibraryChanged":
-                                continue
-                            body = data.get("Data") or data.get("data") or {}
-                            items_added = body.get("ItemsAdded") or body.get("items_added") or []
-                            ids_added = list(dict.fromkeys([i for i in items_added if i]))
-                            if not ids_added:
-                                continue
-                            items = await self.get_items_by_ids(ids_added)
-                            if items:
-                                await self._handle_items(items)
-                        elif msg.type in (aiohttp.WSMsgType.CLOSED, aiohttp.WSMsgType.ERROR):
-                            break
+                elif lived < 5:
+                    fails += 1
+                    if fails >= _WS_FAIL_RELOGIN:
+                        raise RuntimeError(f"WebSocket 连续快速断开 {fails} 次，重新登录")
+                else:
+                    fails = 0
+                self.logger.warning("Jellyfin WebSocket 已断开，%ss 后重连", backoff)
+                await asyncio.sleep(backoff)
+                backoff = min(backoff * 2, 30)
             except asyncio.CancelledError:
                 raise
             except Exception as e:
