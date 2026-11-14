@@ -16,6 +16,7 @@ _WS_FAIL_RELOGIN = 5  # 连续失败这么多次后抛出，让外层 daemon 重
 _WS_KEEPALIVE_DEFAULT = 25.0
 _WS_KEEPALIVE_MIN = 1.0
 _WS_KEEPALIVE_MAX = 25.0
+_WS_KEEPALIVE_PAYLOAD = json.dumps({"MessageType": "KeepAlive"})
 
 # 仅传 Jellyfin ItemFields 枚举中的扩展字段；其余基础属性在 BaseItemDto 中默认返回
 _ITEM_FIELDS = ",".join(["ParentId", "Overview", "Path"])
@@ -33,7 +34,7 @@ def _calc_keepalive_interval(raw_timeout: Any) -> float:
 
 async def _send_ws_keepalive(ws: aiohttp.ClientWebSocketResponse):
     if not ws.closed:
-        await ws.send_str(json.dumps({"MessageType": "KeepAlive"}))
+        await ws.send_str(_WS_KEEPALIVE_PAYLOAD)
 
 
 async def _ws_keepalive_loop(
@@ -635,7 +636,7 @@ class RealtimeItemAdded:
                                     wake.set()
                                     continue
                                 if msg_type == "KeepAlive":
-                                    await _send_ws_keepalive(ws)
+                                    # 服务端发来的心跳响应/确认，直接忽略即可，切勿反向回复 KeepAlive 造成死循环
                                     continue
                                 if msg_type != "LibraryChanged":
                                     continue
