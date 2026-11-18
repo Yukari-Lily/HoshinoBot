@@ -197,6 +197,8 @@ async def render_dynamic_card(
     client: httpx.AsyncClient,
     card_width: int = 800,
     max_text_len: int = 300,
+    include_draw_images: bool = False,
+    show_link: bool = False,
 ) -> str:
     """将 Bilibili 动态数据渲染为贴合官方质感的深色中性风格长图卡片。"""
     padding = 34
@@ -233,16 +235,19 @@ async def render_dynamic_card(
 
     # 提取配图/卡片图片
     draw_pics: List[str] = []
-    if major_type == "MAJOR_TYPE_DRAW" or "draw" in major:
-        items = _dig(major, "draw", "items", default=[])
-        for it in items:
-            if isinstance(it, dict) and it.get("src"):
-                draw_pics.append(str(it["src"]))
-    elif major_type == "MAJOR_TYPE_OPUS" or "opus" in major:
-        pics = _dig(major, "opus", "pics", default=[])
-        for pic in pics:
-            if isinstance(pic, dict) and pic.get("url"):
-                draw_pics.append(str(pic["url"]))
+    if include_draw_images:
+        if isinstance(item.get("opus_pics"), list):
+            draw_pics.extend([str(p) for p in item["opus_pics"] if str(p)])
+        if major_type == "MAJOR_TYPE_DRAW" or "draw" in major:
+            items = _dig(major, "draw", "items", default=[])
+            for it in items:
+                if isinstance(it, dict) and it.get("src") and str(it["src"]) not in draw_pics:
+                    draw_pics.append(str(it["src"]))
+        elif major_type == "MAJOR_TYPE_OPUS" or "opus" in major:
+            pics = _dig(major, "opus", "pics", default=[])
+            for pic in pics:
+                if isinstance(pic, dict) and pic.get("url") and str(pic["url"]) not in draw_pics:
+                    draw_pics.append(str(pic["url"]))
 
     # 专栏文章信息
     article_title = ""
@@ -402,7 +407,7 @@ async def render_dynamic_card(
         cur_y += orig_box_h + 18
 
     # 6. Footer (Separator + Stats + Logo + Link)
-    footer_h = 76
+    footer_h = 76 if show_link else 42
     cur_y += footer_h + padding
 
     total_height = cur_y
@@ -621,11 +626,12 @@ async def render_dynamic_card(
     draw.text((logo_x + logo_size + 8, footer_bar_y - 2), brand_text, fill=COLOR_BILI_PINK, font=font_bili)
 
     # 底部专属链接
-    link_y = footer_bar_y + 30
-    id_str = str(item.get("id_str") or "")
-    if id_str:
-        link_str = f"https://www.bilibili.com/opus/{id_str}"
-        draw.text((padding, link_y), link_str, fill=COLOR_TEXT_MUTED, font=font_link)
+    if show_link:
+        link_y = footer_bar_y + 30
+        id_str = str(item.get("id_str") or "")
+        if id_str:
+            link_str = f"https://www.bilibili.com/opus/{id_str}"
+            draw.text((padding, link_y), link_str, fill=COLOR_TEXT_MUTED, font=font_link)
 
     # 导出为 base64 PNG
     buffer = BytesIO()

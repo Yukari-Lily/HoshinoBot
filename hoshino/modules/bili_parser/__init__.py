@@ -12,6 +12,10 @@ DEFAULT_CONFIG = {
     "render_dynamic_as_image": True,
     "card_width": 800,
     "max_text_len": 200,
+    "separate_dynamic_images": True,
+    "card_include_draw_images": False,
+    "max_separate_images": 9,
+    "show_dynamic_url": False,
 }
 config = DEFAULT_CONFIG.copy()
 config.update(load_yaml_config("bili_parser", {}))
@@ -40,6 +44,10 @@ async def bili_parser(bot, ev):
         render_dynamic_as_image=bool(config.get("render_dynamic_as_image", True)),
         card_width=int(config.get("card_width", 800)),
         max_text_len=int(config.get("max_text_len", 200)),
+        separate_dynamic_images=bool(config.get("separate_dynamic_images", True)),
+        card_include_draw_images=bool(config.get("card_include_draw_images", False)),
+        max_separate_images=int(config.get("max_separate_images", 9)),
+        show_dynamic_url=bool(config.get("show_dynamic_url", False)),
     )
     if not results:
         return

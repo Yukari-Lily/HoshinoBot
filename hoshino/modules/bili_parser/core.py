@@ -1,3 +1,4 @@
+import asyncio
 import html
 import json
 import logging
@@ -138,13 +139,76 @@ async def fetch_link(client: httpx.AsyncClient, link_type: str, identifier: str)
         response = await client.get(
             "https://api.bilibili.com/pgc/view/web/season?season_id=" + str(season_id)
         )
+        response.raise_for_status()
+        return response.json()
+    elif link_type == "opus":
+        url_dyn = "https://api.bilibili.com/x/polymer/web-dynamic/v1/detail?id=" + identifier
+        url_opus = "https://api.bilibili.com/x/polymer/web-dynamic/v1/opus/detail?id=" + identifier
+        res_dyn, res_opus = await asyncio.gather(
+            client.get(url_dyn),
+            client.get(url_opus),
+            return_exceptions=True,
+        )
+        payload: Dict[str, object] = {}
+        if isinstance(res_dyn, httpx.Response) and res_dyn.status_code == 200:
+            try:
+                payload = res_dyn.json()
+            except Exception:
+                payload = {}
+
+        opus_payload: Dict[str, object] = {}
+        if isinstance(res_opus, httpx.Response) and res_opus.status_code == 200:
+            try:
+                opus_payload = res_opus.json()
+            except Exception:
+                opus_payload = {}
+
+        item = _dig(payload, "data", "item", default={})
+        if not item and _dig(opus_payload, "code", default=-1) == 0:
+            item = _build_item_from_opus(opus_payload)
+            payload = {"code": 0, "data": {"item": item}}
+
+        if item:
+            opus_text, opus_pics = extract_opus_content(opus_payload)
+            if opus_pics:
+                item["opus_pics"] = opus_pics
+
+            cur_desc = _dig(item, "modules", "module_dynamic", "desc", "text", default="")
+            if not cur_desc and opus_text:
+                if "modules" not in item or not isinstance(item["modules"], dict):
+                    item["modules"] = {}
+                if "module_dynamic" not in item["modules"] or not isinstance(item["modules"]["module_dynamic"], dict):
+                    item["modules"]["module_dynamic"] = {}
+                if not item["modules"]["module_dynamic"].get("desc") or not isinstance(item["modules"]["module_dynamic"]["desc"], dict):
+                    item["modules"]["module_dynamic"]["desc"] = {}
+                item["modules"]["module_dynamic"]["desc"]["text"] = opus_text
+
+            if opus_pics:
+                cur_draw = _dig(item, "modules", "module_dynamic", "major", "draw", "items", default=[])
+                if not cur_draw:
+                    if "modules" not in item or not isinstance(item["modules"], dict):
+                        item["modules"] = {}
+                    if "module_dynamic" not in item["modules"] or not isinstance(item["modules"]["module_dynamic"], dict):
+                        item["modules"]["module_dynamic"] = {}
+                    if "major" not in item["modules"]["module_dynamic"] or not isinstance(item["modules"]["module_dynamic"]["major"], dict):
+                        item["modules"]["module_dynamic"]["major"] = {}
+                    item["modules"]["module_dynamic"]["major"]["type"] = "MAJOR_TYPE_DRAW"
+                    item["modules"]["module_dynamic"]["major"]["draw"] = {
+                        "items": [{"src": u} for u in opus_pics]
+                    }
+
+        if payload.get("code") == 0:
+            return payload
+        if not payload:
+            raise ValueError("无法获取动态信息")
+        return payload
     else:
         url = _api_url(link_type, identifier)
         if not url:
             raise ValueError("不支持的链接类型")
         response = await client.get(url)
-    response.raise_for_status()
-    return response.json()
+        response.raise_for_status()
+        return response.json()
 
 
 def _dig(data: object, *keys, default=""):
@@ -183,7 +247,140 @@ def _truncate(value: object, length: int = 35) -> str:
     return text[:length] + "…"
 
 
-def _render_opus_text(item: Dict[str, object], identifier: str, max_text_len: int = 200) -> str:
+def _extract_node_text(node: object) -> str:
+    if not isinstance(node, dict):
+        return ""
+    word = node.get("word")
+    if isinstance(word, dict) and word.get("words"):
+        return str(word["words"])
+    rich = node.get("rich")
+    if isinstance(rich, dict) and rich.get("text"):
+        return str(rich["text"])
+    user = node.get("user")
+    if isinstance(user, dict) and user.get("name"):
+        return "@" + str(user["name"])
+    return ""
+
+
+def extract_opus_content(data: Dict[str, object]) -> Tuple[str, List[str]]:
+    """从 Bilibili opus/detail 接口返回的数据中提取全部正文文字和图片列表。"""
+    item = _dig(data, "data", "item", default={})
+    text_paras: List[str] = []
+    pics: List[str] = []
+    modules = item.get("modules")
+    if isinstance(modules, list):
+        for mod in modules:
+            if not isinstance(mod, dict):
+                continue
+            if mod.get("module_type") == "MODULE_TYPE_CONTENT":
+                content = mod.get("module_content") or {}
+                for p in content.get("paragraphs") or []:
+                    if not isinstance(p, dict):
+                        continue
+                    text_obj = p.get("text")
+                    if isinstance(text_obj, dict):
+                        nodes = text_obj.get("nodes") or []
+                        p_text = "".join(_extract_node_text(n) for n in nodes).strip()
+                        if p_text:
+                            text_paras.append(p_text)
+                    pic_obj = p.get("pic")
+                    if isinstance(pic_obj, dict):
+                        for pic in pic_obj.get("pics") or []:
+                            if isinstance(pic, dict) and pic.get("url"):
+                                pics.append(str(pic["url"]))
+    return "\n".join(text_paras), pics
+
+
+def _build_item_from_opus(opus_payload: Dict[str, object]) -> Dict[str, object]:
+    """当通用动态接口不可用时，利用 opus 接口数据合成通用的 item 结构。"""
+    raw_item = _dig(opus_payload, "data", "item", default={})
+    opus_text, opus_pics = extract_opus_content(opus_payload)
+    author = {}
+    stat = {}
+    for mod in raw_item.get("modules") or []:
+        if not isinstance(mod, dict):
+            continue
+        mtype = mod.get("module_type")
+        if mtype == "MODULE_TYPE_AUTHOR":
+            author = mod.get("module_author") or {}
+        elif mtype == "MODULE_TYPE_STAT":
+            stat = mod.get("module_stat") or {}
+
+    item: Dict[str, object] = {
+        "id_str": str(raw_item.get("id_str") or ""),
+        "type": str(raw_item.get("type") or "DYNAMIC_TYPE_DRAW"),
+        "modules": {
+            "module_author": author,
+            "module_dynamic": {
+                "desc": {"text": opus_text},
+                "major": {
+                    "type": "MAJOR_TYPE_DRAW" if opus_pics else "MAJOR_TYPE_NONE",
+                    "draw": {"items": [{"src": u} for u in opus_pics]} if opus_pics else {},
+                },
+            },
+            "module_stat": stat,
+        },
+        "opus_pics": opus_pics,
+    }
+    return item
+
+
+def _extract_draw_pics(item: Dict[str, object]) -> List[str]:
+    """提取动态中的所有原图配图链接。"""
+    pics: List[str] = []
+    # 1. 优先提取从 opus 详情接口中解析的图片
+    if isinstance(item.get("opus_pics"), list):
+        for p in item["opus_pics"]:
+            if isinstance(p, str) and p and p not in pics:
+                pics.append(p)
+
+    # 2. 从 modules.module_dynamic.major 提取
+    dynamic = _dig(item, "modules", "module_dynamic", default={})
+    major = _dig(dynamic, "major", default={})
+    major_type = str(major.get("type") or "")
+    if major_type == "MAJOR_TYPE_DRAW" or "draw" in major:
+        for it in _dig(major, "draw", "items", default=[]):
+            if isinstance(it, dict) and it.get("src"):
+                src = str(it["src"])
+                if src not in pics:
+                    pics.append(src)
+    elif major_type == "MAJOR_TYPE_OPUS" or "opus" in major:
+        for it in _dig(major, "opus", "pics", default=[]):
+            if isinstance(it, dict) and it.get("url"):
+                url = str(it["url"])
+                if url not in pics:
+                    pics.append(url)
+
+    # 3. 若自身无配图且是转发动态，提取被转发原动态中的配图
+    if not pics:
+        orig = item.get("orig")
+        if isinstance(orig, dict) and orig.get("type") != "DYNAMIC_TYPE_NONE":
+            orig_dyn = _dig(orig, "modules", "module_dynamic", default={})
+            orig_major = _dig(orig_dyn, "major", default={})
+            orig_major_type = str(orig_major.get("type") or "")
+            if orig_major_type == "MAJOR_TYPE_DRAW" or "draw" in orig_major:
+                for it in _dig(orig_major, "draw", "items", default=[]):
+                    if isinstance(it, dict) and it.get("src"):
+                        src = str(it["src"])
+                        if src not in pics:
+                            pics.append(src)
+            elif orig_major_type == "MAJOR_TYPE_OPUS" or "opus" in orig_major:
+                for it in _dig(orig_major, "opus", "pics", default=[]):
+                    if isinstance(it, dict) and it.get("url"):
+                        url = str(it["url"])
+                        if url not in pics:
+                            pics.append(url)
+    return pics
+
+
+def _render_opus_text(
+    item: Dict[str, object],
+    identifier: str,
+    max_text_len: int = 200,
+    separate_images: bool = True,
+    max_images: int = 9,
+    show_dynamic_url: bool = False,
+) -> str:
     """动态的纯文本+CQ码渲染模式（作为降级备用或关闭图片渲染时使用）。"""
     author = _dig(item, "modules", "module_author", default={})
     author_name = str(author.get("name") or "")
@@ -222,9 +419,7 @@ def _render_opus_text(item: Dict[str, object], identifier: str, max_text_len: in
         if summary and not desc_text:
             lines.append(summary)
     elif major_type == "MAJOR_TYPE_DRAW" or "draw" in major:
-        items = _dig(major, "draw", "items", default=[])
-        if items and isinstance(items, list) and isinstance(items[0], dict):
-            lines.append(_image(items[0].get("src")))
+        pass
     elif major_type == "MAJOR_TYPE_ARCHIVE" or "archive" in major:
         archive = major.get("archive") or {}
         lines.append(f"【视频】{archive.get('title')}")
@@ -255,11 +450,20 @@ def _render_opus_text(item: Dict[str, object], identifier: str, max_text_len: in
             if o_items and isinstance(o_items, list) and isinstance(o_items[0], dict):
                 lines.append(_image(o_items[0].get("src")))
 
+    # 动态配图提取与单独发送
+    draw_pics = _extract_draw_pics(item)
+    if separate_images and draw_pics:
+        for pic_url in draw_pics[:max(1, max_images)]:
+            lines.append(_image(pic_url))
+    elif not separate_images and draw_pics:
+        lines.append(_image(draw_pics[0]))
+
     # 如果以上都没有任何附带图文，显示发布者头像
     if len(lines) == 1 and author.get("face"):
         lines.append(_image(author.get("face")))
 
-    lines.append("https://www.bilibili.com/opus/" + str(item.get("id_str") or identifier))
+    if show_dynamic_url:
+        lines.append("https://www.bilibili.com/opus/" + str(item.get("id_str") or identifier))
     return _compact(lines)
 
 
@@ -271,6 +475,10 @@ async def render_result(
     render_dynamic_as_image: bool = True,
     card_width: int = 800,
     max_text_len: int = 200,
+    separate_dynamic_images: bool = True,
+    card_include_draw_images: bool = False,
+    max_separate_images: int = 9,
+    show_dynamic_url: bool = False,
 ) -> str:
     if int(payload.get("code", 0)) != 0:
         message = payload.get("message") or payload.get("msg") or "未知错误"
@@ -333,24 +541,52 @@ async def render_result(
         if not isinstance(item, dict):
             raise ValueError("动态数据无效")
 
+        # 提取动态配图列表（用于单独发布）
+        draw_pics = _extract_draw_pics(item)
+        lines = []
+
         # 优先渲染为精美长图卡片
         if render_dynamic_as_image and client:
             try:
+                # 若未开启单独发图，卡片中内嵌配图；若开启单独发图，按配置决定是否在卡片内包含配图
+                actual_include_draw = card_include_draw_images or (not separate_dynamic_images)
                 card_base64 = await render_dynamic_card(
                     item,
                     client,
                     card_width=card_width,
                     max_text_len=max_text_len,
+                    include_draw_images=actual_include_draw,
+                    show_link=show_dynamic_url,
                 )
-                return _compact((
-                    f"[CQ:image,file={card_base64}]",
-                    f"https://www.bilibili.com/opus/{item.get('id_str') or identifier}",
-                ))
+                lines.append(f"[CQ:image,file={card_base64}]")
             except Exception as exc:
                 logger.warning("动态长图卡片渲染失败，降级为文本模式: %s", exc)
+                return _render_opus_text(
+                    item,
+                    identifier,
+                    max_text_len=max_text_len,
+                    separate_images=separate_dynamic_images,
+                    max_images=max_separate_images,
+                    show_dynamic_url=show_dynamic_url,
+                )
+        else:
+            return _render_opus_text(
+                item,
+                identifier,
+                max_text_len=max_text_len,
+                separate_images=separate_dynamic_images,
+                max_images=max_separate_images,
+                show_dynamic_url=show_dynamic_url,
+            )
 
-        # 降级或关闭图片渲染时的纯文本+CQ码模式
-        return _render_opus_text(item, identifier, max_text_len=max_text_len)
+        # 单独提取并发布动态配图
+        if separate_dynamic_images and draw_pics:
+            for pic_url in draw_pics[:max(1, max_separate_images)]:
+                lines.append(_image(pic_url))
+
+        if show_dynamic_url:
+            lines.append(f"https://www.bilibili.com/opus/{item.get('id_str') or identifier}")
+        return _compact(lines)
 
     if link_type == "space":
         item = _dig(data, "items", 0, default={})
@@ -371,6 +607,10 @@ async def parse_and_render(
     render_dynamic_as_image: bool = True,
     card_width: int = 800,
     max_text_len: int = 200,
+    separate_dynamic_images: bool = True,
+    card_include_draw_images: bool = False,
+    max_separate_images: int = 9,
+    show_dynamic_url: bool = False,
 ) -> List[str]:
     links = parse_links(content, video_full_url=video_full_url)
     headers = {"User-Agent": USER_AGENT, "Referer": "https://www.bilibili.com/"}
@@ -405,6 +645,10 @@ async def parse_and_render(
                     render_dynamic_as_image=render_dynamic_as_image,
                     card_width=card_width,
                     max_text_len=max_text_len,
+                    separate_dynamic_images=separate_dynamic_images,
+                    card_include_draw_images=card_include_draw_images,
+                    max_separate_images=max_separate_images,
+                    show_dynamic_url=show_dynamic_url,
                 )
                 results.append(result)
             except Exception as exc:

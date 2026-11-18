@@ -14,3 +14,15 @@ card_width: 800
 
 # 正文与专栏摘要截断长度（默认 200 字，0 为不截断）
 max_text_len: 200
+
+# 是否将动态配图单独作为图片消息发送（默认 true，方便群友查看和保存原图）
+separate_dynamic_images: true
+
+# 制图卡片中是否包含动态配图（默认 false；若单独发图开启且此处为 false，卡片仅呈现文字与信息，避免群内重复显示相同图片）
+card_include_draw_images: false
+
+# 单条动态最多单独发送的配图数量（默认 9 张）
+max_separate_images: 9
+
+# 是否在动态卡片与消息最下方附带 opus 原链接（默认 false，不再附带长链接文本）
+show_dynamic_url: false
