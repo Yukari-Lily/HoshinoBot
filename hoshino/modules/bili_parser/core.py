@@ -390,7 +390,8 @@ async def _render_opus_text(
     max_images: int = 9,
     show_dynamic_url: bool = False,
     stitch_multi_images: bool = True,
-) -> str:
+    separate_image_message: bool = True,
+) -> List[str]:
     """动态的纯文本+CQ码渲染模式（作为降级备用或关闭图片渲染时使用）。"""
     author = _dig(item, "modules", "module_author", default={})
     author_name = str(author.get("name") or "")
@@ -460,29 +461,8 @@ async def _render_opus_text(
             if o_items and isinstance(o_items, list) and isinstance(o_items[0], dict):
                 lines.append(_image(o_items[0].get("src")))
 
-    # 动态配图提取与单独发送
     draw_pics = _extract_draw_pics(item)
-    if separate_images and draw_pics:
-        selected_pics = draw_pics[:max(1, max_images)]
-        if len(selected_pics) == 1:
-            lines.append(_image(selected_pics[0]))
-        elif len(selected_pics) > 1:
-            if stitch_multi_images and client:
-                try:
-                    stitched_b64 = await stitch_images_vertically(client, selected_pics)
-                    if stitched_b64:
-                        lines.append(f"[CQ:image,file={stitched_b64}]")
-                    else:
-                        for pic_url in selected_pics:
-                            lines.append(_image(pic_url))
-                except Exception as exc:
-                    logger.warning("动态降级文本模式多图拼接失败: %s", exc)
-                    for pic_url in selected_pics:
-                        lines.append(_image(pic_url))
-            else:
-                for pic_url in selected_pics:
-                    lines.append(_image(pic_url))
-    elif not separate_images and draw_pics:
+    if not separate_images and draw_pics:
         lines.append(_image(draw_pics[0]))
 
     # 如果以上都没有任何附带图文，显示发布者头像
@@ -491,7 +471,37 @@ async def _render_opus_text(
 
     if show_dynamic_url:
         lines.append("https://www.bilibili.com/opus/" + str(item.get("id_str") or identifier))
-    return _compact(lines)
+
+    card_msg = _compact(lines)
+
+    # 动态配图提取与单独发送
+    pics_msg = ""
+    if separate_images and draw_pics:
+        selected_pics = draw_pics[:max(1, max_images)]
+        if len(selected_pics) == 1:
+            pics_msg = _image(selected_pics[0])
+        elif len(selected_pics) > 1:
+            if stitch_multi_images and client:
+                try:
+                    stitched_b64 = await stitch_images_vertically(client, selected_pics)
+                    if stitched_b64:
+                        pics_msg = f"[CQ:image,file={stitched_b64}]"
+                    else:
+                        pics_msg = "\n".join(_image(pic_url) for pic_url in selected_pics)
+                except Exception as exc:
+                    logger.warning("动态降级文本模式多图拼接失败: %s", exc)
+                    pics_msg = "\n".join(_image(pic_url) for pic_url in selected_pics)
+            else:
+                pics_msg = "\n".join(_image(pic_url) for pic_url in selected_pics)
+
+    if pics_msg:
+        if separate_image_message and card_msg:
+            return [card_msg, pics_msg]
+        elif card_msg:
+            return [_compact((card_msg, pics_msg))]
+        else:
+            return [pics_msg]
+    return [card_msg] if card_msg else []
 
 
 async def render_result(
@@ -507,7 +517,8 @@ async def render_result(
     max_separate_images: int = 9,
     show_dynamic_url: bool = False,
     stitch_multi_images: bool = True,
-) -> str:
+    separate_image_message: bool = True,
+) -> List[str]:
     if int(payload.get("code", 0)) != 0:
         message = payload.get("message") or payload.get("msg") or "未知错误"
         raise ValueError(str(message))
@@ -518,37 +529,37 @@ async def render_result(
         raise ValueError("接口未返回有效数据")
 
     if link_type == "video":
-        return _compact((data.get("title"), "b23.tv/" + str(data.get("bvid") or identifier)))
+        return [_compact((data.get("title"), "b23.tv/" + str(data.get("bvid") or identifier)))]
 
     if link_type == "live":
         statuses = {0: "未开播", 1: "直播中", 2: "轮播中"}
         status = statuses.get(data.get("live_status"), "未知状态")
-        return _compact(("[%s]%s" % (status, data.get("title") or ""),
-                         "https://live.bilibili.com/" + str(data.get("room_id") or identifier)))
+        return [_compact(("[%s]%s" % (status, data.get("title") or ""),
+                          "https://live.bilibili.com/" + str(data.get("room_id") or identifier)))]
 
     if link_type in ("season", "media"):
         score = _dig(data, "rating", "score")
         title = str(data.get("season_title") or "") + (("（%s分）" % score) if score != "" else "")
-        return _compact((title, _image(data.get("cover")),
-                         "https://www.bilibili.com/bangumi/media/md" + str(data.get("media_id") or re.sub(r"^md", "", identifier, flags=re.I))))
+        return [_compact((title, _image(data.get("cover")),
+                          "https://www.bilibili.com/bangumi/media/md" + str(data.get("media_id") or re.sub(r"^md", "", identifier, flags=re.I))))]
 
     if link_type == "episode":
         ep_id = int(re.sub(r"^ep", "", identifier, flags=re.I))
         episodes = data.get("episodes") or []
         episode = next((item for item in episodes if int(item.get("ep_id") or item.get("id") or 0) == ep_id), {})
-        return _compact((
+        return [_compact((
             data.get("season_title"),
             _image(episode.get("cover")),
             "第 %s 话 - %s" % (episode.get("title") or "", episode.get("long_title") or ""),
             _truncate(data.get("evaluate"), 35),
             "https://www.bilibili.com/bangumi/play/ep" + str(episode.get("ep_id") or episode.get("id") or ep_id),
-        ))
+        ))]
 
     if link_type == "audio":
-        return _compact((data.get("title"), "https://www.bilibili.com/audio/au" + str(data.get("id") or identifier)))
+        return [_compact((data.get("title"), "https://www.bilibili.com/audio/au" + str(data.get("id") or identifier)))]
 
     if link_type == "audio_menu":
-        return _compact((data.get("title"), "https://www.bilibili.com/audio/am" + str(data.get("menuId") or identifier)))
+        return [_compact((data.get("title"), "https://www.bilibili.com/audio/am" + str(data.get("menuId") or identifier)))]
 
     if link_type == "article":
         title = data.get("title") or "专栏文章"
@@ -556,13 +567,13 @@ async def render_result(
         summary = _truncate(data.get("summary"), max_text_len)
         cover = data.get("banner_url") or _dig(data, "image_urls", 0)
         cv_id = re.sub(r"^cv", "", identifier, flags=re.I)
-        return _compact((
+        return [_compact((
             f"【专栏】{title}",
             f"UP主：{author_name}" if author_name else "",
             _image(cover),
             summary,
             f"https://www.bilibili.com/read/cv{cv_id}",
-        ))
+        ))]
 
     if link_type == "opus":
         item = data.get("item") or {}
@@ -571,7 +582,8 @@ async def render_result(
 
         # 提取动态配图列表（用于单独发布）
         draw_pics = _extract_draw_pics(item)
-        lines = []
+        card_msg = ""
+        fallback_mode = False
 
         # 优先渲染为精美长图卡片
         if render_dynamic_as_image and client:
@@ -586,20 +598,17 @@ async def render_result(
                     include_draw_images=actual_include_draw,
                     show_link=show_dynamic_url,
                 )
-                lines.append(f"[CQ:image,file={card_base64}]")
+                card_lines = [f"[CQ:image,file={card_base64}]"]
+                if show_dynamic_url:
+                    card_lines.append(f"https://www.bilibili.com/opus/{item.get('id_str') or identifier}")
+                card_msg = _compact(card_lines)
             except Exception as exc:
                 logger.warning("动态长图卡片渲染失败，降级为文本模式: %s", exc)
-                return await _render_opus_text(
-                    item,
-                    identifier,
-                    client=client,
-                    max_text_len=max_text_len,
-                    separate_images=separate_dynamic_images,
-                    max_images=max_separate_images,
-                    show_dynamic_url=show_dynamic_url,
-                    stitch_multi_images=stitch_multi_images,
-                )
+                fallback_mode = True
         else:
+            fallback_mode = True
+
+        if fallback_mode:
             return await _render_opus_text(
                 item,
                 identifier,
@@ -609,42 +618,50 @@ async def render_result(
                 max_images=max_separate_images,
                 show_dynamic_url=show_dynamic_url,
                 stitch_multi_images=stitch_multi_images,
+                separate_image_message=separate_image_message,
             )
 
         # 单独提取并发布动态配图
+        pics_lines = []
         if separate_dynamic_images and draw_pics:
             selected_pics = draw_pics[:max(1, max_separate_images)]
             if len(selected_pics) == 1:
-                lines.append(_image(selected_pics[0]))
+                pics_lines.append(_image(selected_pics[0]))
             elif len(selected_pics) > 1:
                 if stitch_multi_images and client:
                     try:
                         stitched_b64 = await stitch_images_vertically(client, selected_pics)
                         if stitched_b64:
-                            lines.append(f"[CQ:image,file={stitched_b64}]")
+                            pics_lines.append(f"[CQ:image,file={stitched_b64}]")
                         else:
                             for pic_url in selected_pics:
-                                lines.append(_image(pic_url))
+                                pics_lines.append(_image(pic_url))
                     except Exception as exc:
                         logger.warning("多图拼接长图失败，降级为单独多图发送: %s", exc)
                         for pic_url in selected_pics:
-                            lines.append(_image(pic_url))
+                            pics_lines.append(_image(pic_url))
                 else:
                     for pic_url in selected_pics:
-                        lines.append(_image(pic_url))
+                        pics_lines.append(_image(pic_url))
 
-        if show_dynamic_url:
-            lines.append(f"https://www.bilibili.com/opus/{item.get('id_str') or identifier}")
-        return _compact(lines)
+        pics_msg = _compact(pics_lines)
+        if pics_msg:
+            if separate_image_message and card_msg:
+                return [card_msg, pics_msg]
+            elif card_msg:
+                return [_compact((card_msg, pics_msg))]
+            else:
+                return [pics_msg]
+        return [card_msg] if card_msg else []
 
     if link_type == "space":
         item = _dig(data, "items", 0, default={})
         author = _dig(item, "modules", "module_author", default={})
-        return _compact((
+        return [_compact((
             str(author.get("name") or "") + " 的个人空间",
             _image(author.get("face")),
             "https://space.bilibili.com/" + str(author.get("mid") or identifier),
-        ))
+        ))]
 
     raise ValueError("不支持的链接类型")
 
@@ -661,6 +678,7 @@ async def parse_and_render(
     max_separate_images: int = 9,
     show_dynamic_url: bool = False,
     stitch_multi_images: bool = True,
+    separate_image_message: bool = True,
 ) -> List[str]:
     links = parse_links(content, video_full_url=video_full_url)
     headers = {"User-Agent": USER_AGENT, "Referer": "https://www.bilibili.com/"}
@@ -678,13 +696,15 @@ async def parse_and_render(
                 continue
 
         seen = set()
+        parsed_count = 0
         for link_type, identifier in expanded:
             key = (link_type, identifier.lower())
             if key in seen:
                 continue
             seen.add(key)
-            if len(results) >= max(1, parse_limit):
+            if parsed_count >= max(1, parse_limit):
                 break
+            parsed_count += 1
             try:
                 payload = await fetch_link(client, link_type, identifier)
                 result = await render_result(
@@ -700,8 +720,12 @@ async def parse_and_render(
                     max_separate_images=max_separate_images,
                     show_dynamic_url=show_dynamic_url,
                     stitch_multi_images=stitch_multi_images,
+                    separate_image_message=separate_image_message,
                 )
-                results.append(result)
+                if isinstance(result, list):
+                    results.extend(result)
+                else:
+                    results.append(str(result))
             except Exception as exc:
                 results.append("获取 ID 为 %s 的%s时发生错误：%s。" % (
                     identifier, TYPE_NAMES.get(link_type, "链接"), exc

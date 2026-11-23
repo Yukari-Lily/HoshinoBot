@@ -1,3 +1,5 @@
+import asyncio
+
 from hoshino import Service, priv
 from hoshino.util import load_yaml_config
 
@@ -17,6 +19,7 @@ DEFAULT_CONFIG = {
     "max_separate_images": 9,
     "show_dynamic_url": False,
     "stitch_multi_images": True,
+    "separate_image_message": True,
 }
 config = DEFAULT_CONFIG.copy()
 config.update(load_yaml_config("bili_parser", {}))
@@ -50,12 +53,16 @@ async def bili_parser(bot, ev):
         max_separate_images=int(config.get("max_separate_images", 9)),
         show_dynamic_url=bool(config.get("show_dynamic_url", False)),
         stitch_multi_images=bool(config.get("stitch_multi_images", True)),
+        separate_image_message=bool(config.get("separate_image_message", True)),
     )
     if not results:
         return
 
-    delimiter = "\n%s\n" % str(config.get("delimiter") or "------")
-    message = delimiter.join(results)
-    if config.get("show_quote"):
-        message = "[CQ:reply,id=%s]\n%s" % (ev.message_id, message)
-    await bot.send(ev, message)
+    for i, msg in enumerate(results):
+        if not msg:
+            continue
+        if i == 0 and config.get("show_quote"):
+            msg = "[CQ:reply,id=%s]\n%s" % (ev.message_id, msg)
+        await bot.send(ev, msg)
+        if i < len(results) - 1:
+            await asyncio.sleep(0.3)
