@@ -7,7 +7,7 @@ from typing import Dict, Iterable, List, Optional, Tuple
 
 import httpx
 
-from .render import render_dynamic_card
+from .render import render_dynamic_card, stitch_images_vertically
 
 
 logger = logging.getLogger(__name__)
@@ -325,14 +325,30 @@ def _build_item_from_opus(opus_payload: Dict[str, object]) -> Dict[str, object]:
     return item
 
 
+def _clean_pic_url(url: str) -> str:
+    """去除 Bilibili 图片直链后附带的缩略图参数（如 @518w.webp），获取真实原图。"""
+    if not url:
+        return ""
+    url = url.strip()
+    if "@" in url and ("hdslb.com" in url or "bilibili.com" in url):
+        url = url.split("@")[0]
+    return url
+
+
 def _extract_draw_pics(item: Dict[str, object]) -> List[str]:
     """提取动态中的所有原图配图链接。"""
     pics: List[str] = []
+
+    def _add_pic(u: object) -> None:
+        if isinstance(u, str) and u:
+            cleaned = _clean_pic_url(u)
+            if cleaned and cleaned not in pics:
+                pics.append(cleaned)
+
     # 1. 优先提取从 opus 详情接口中解析的图片
     if isinstance(item.get("opus_pics"), list):
         for p in item["opus_pics"]:
-            if isinstance(p, str) and p and p not in pics:
-                pics.append(p)
+            _add_pic(p)
 
     # 2. 从 modules.module_dynamic.major 提取
     dynamic = _dig(item, "modules", "module_dynamic", default={})
@@ -341,15 +357,11 @@ def _extract_draw_pics(item: Dict[str, object]) -> List[str]:
     if major_type == "MAJOR_TYPE_DRAW" or "draw" in major:
         for it in _dig(major, "draw", "items", default=[]):
             if isinstance(it, dict) and it.get("src"):
-                src = str(it["src"])
-                if src not in pics:
-                    pics.append(src)
+                _add_pic(it["src"])
     elif major_type == "MAJOR_TYPE_OPUS" or "opus" in major:
         for it in _dig(major, "opus", "pics", default=[]):
             if isinstance(it, dict) and it.get("url"):
-                url = str(it["url"])
-                if url not in pics:
-                    pics.append(url)
+                _add_pic(it["url"])
 
     # 3. 若自身无配图且是转发动态，提取被转发原动态中的配图
     if not pics:
@@ -361,25 +373,23 @@ def _extract_draw_pics(item: Dict[str, object]) -> List[str]:
             if orig_major_type == "MAJOR_TYPE_DRAW" or "draw" in orig_major:
                 for it in _dig(orig_major, "draw", "items", default=[]):
                     if isinstance(it, dict) and it.get("src"):
-                        src = str(it["src"])
-                        if src not in pics:
-                            pics.append(src)
+                        _add_pic(it["src"])
             elif orig_major_type == "MAJOR_TYPE_OPUS" or "opus" in orig_major:
                 for it in _dig(orig_major, "opus", "pics", default=[]):
                     if isinstance(it, dict) and it.get("url"):
-                        url = str(it["url"])
-                        if url not in pics:
-                            pics.append(url)
+                        _add_pic(it["url"])
     return pics
 
 
-def _render_opus_text(
+async def _render_opus_text(
     item: Dict[str, object],
     identifier: str,
+    client: Optional[httpx.AsyncClient] = None,
     max_text_len: int = 200,
     separate_images: bool = True,
     max_images: int = 9,
     show_dynamic_url: bool = False,
+    stitch_multi_images: bool = True,
 ) -> str:
     """动态的纯文本+CQ码渲染模式（作为降级备用或关闭图片渲染时使用）。"""
     author = _dig(item, "modules", "module_author", default={})
@@ -453,8 +463,25 @@ def _render_opus_text(
     # 动态配图提取与单独发送
     draw_pics = _extract_draw_pics(item)
     if separate_images and draw_pics:
-        for pic_url in draw_pics[:max(1, max_images)]:
-            lines.append(_image(pic_url))
+        selected_pics = draw_pics[:max(1, max_images)]
+        if len(selected_pics) == 1:
+            lines.append(_image(selected_pics[0]))
+        elif len(selected_pics) > 1:
+            if stitch_multi_images and client:
+                try:
+                    stitched_b64 = await stitch_images_vertically(client, selected_pics)
+                    if stitched_b64:
+                        lines.append(f"[CQ:image,file={stitched_b64}]")
+                    else:
+                        for pic_url in selected_pics:
+                            lines.append(_image(pic_url))
+                except Exception as exc:
+                    logger.warning("动态降级文本模式多图拼接失败: %s", exc)
+                    for pic_url in selected_pics:
+                        lines.append(_image(pic_url))
+            else:
+                for pic_url in selected_pics:
+                    lines.append(_image(pic_url))
     elif not separate_images and draw_pics:
         lines.append(_image(draw_pics[0]))
 
@@ -479,6 +506,7 @@ async def render_result(
     card_include_draw_images: bool = False,
     max_separate_images: int = 9,
     show_dynamic_url: bool = False,
+    stitch_multi_images: bool = True,
 ) -> str:
     if int(payload.get("code", 0)) != 0:
         message = payload.get("message") or payload.get("msg") or "未知错误"
@@ -561,28 +589,49 @@ async def render_result(
                 lines.append(f"[CQ:image,file={card_base64}]")
             except Exception as exc:
                 logger.warning("动态长图卡片渲染失败，降级为文本模式: %s", exc)
-                return _render_opus_text(
+                return await _render_opus_text(
                     item,
                     identifier,
+                    client=client,
                     max_text_len=max_text_len,
                     separate_images=separate_dynamic_images,
                     max_images=max_separate_images,
                     show_dynamic_url=show_dynamic_url,
+                    stitch_multi_images=stitch_multi_images,
                 )
         else:
-            return _render_opus_text(
+            return await _render_opus_text(
                 item,
                 identifier,
+                client=client,
                 max_text_len=max_text_len,
                 separate_images=separate_dynamic_images,
                 max_images=max_separate_images,
                 show_dynamic_url=show_dynamic_url,
+                stitch_multi_images=stitch_multi_images,
             )
 
         # 单独提取并发布动态配图
         if separate_dynamic_images and draw_pics:
-            for pic_url in draw_pics[:max(1, max_separate_images)]:
-                lines.append(_image(pic_url))
+            selected_pics = draw_pics[:max(1, max_separate_images)]
+            if len(selected_pics) == 1:
+                lines.append(_image(selected_pics[0]))
+            elif len(selected_pics) > 1:
+                if stitch_multi_images and client:
+                    try:
+                        stitched_b64 = await stitch_images_vertically(client, selected_pics)
+                        if stitched_b64:
+                            lines.append(f"[CQ:image,file={stitched_b64}]")
+                        else:
+                            for pic_url in selected_pics:
+                                lines.append(_image(pic_url))
+                    except Exception as exc:
+                        logger.warning("多图拼接长图失败，降级为单独多图发送: %s", exc)
+                        for pic_url in selected_pics:
+                            lines.append(_image(pic_url))
+                else:
+                    for pic_url in selected_pics:
+                        lines.append(_image(pic_url))
 
         if show_dynamic_url:
             lines.append(f"https://www.bilibili.com/opus/{item.get('id_str') or identifier}")
@@ -611,6 +660,7 @@ async def parse_and_render(
     card_include_draw_images: bool = False,
     max_separate_images: int = 9,
     show_dynamic_url: bool = False,
+    stitch_multi_images: bool = True,
 ) -> List[str]:
     links = parse_links(content, video_full_url=video_full_url)
     headers = {"User-Agent": USER_AGENT, "Referer": "https://www.bilibili.com/"}
@@ -649,6 +699,7 @@ async def parse_and_render(
                     card_include_draw_images=card_include_draw_images,
                     max_separate_images=max_separate_images,
                     show_dynamic_url=show_dynamic_url,
+                    stitch_multi_images=stitch_multi_images,
                 )
                 results.append(result)
             except Exception as exc:

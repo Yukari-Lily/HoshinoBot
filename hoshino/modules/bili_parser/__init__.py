@@ -16,6 +16,7 @@ DEFAULT_CONFIG = {
     "card_include_draw_images": False,
     "max_separate_images": 9,
     "show_dynamic_url": False,
+    "stitch_multi_images": True,
 }
 config = DEFAULT_CONFIG.copy()
 config.update(load_yaml_config("bili_parser", {}))
@@ -48,6 +49,7 @@ async def bili_parser(bot, ev):
         card_include_draw_images=bool(config.get("card_include_draw_images", False)),
         max_separate_images=int(config.get("max_separate_images", 9)),
         show_dynamic_url=bool(config.get("show_dynamic_url", False)),
+        stitch_multi_images=bool(config.get("stitch_multi_images", True)),
     )
     if not results:
         return

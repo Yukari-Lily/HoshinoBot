@@ -24,5 +24,8 @@ card_include_draw_images: false
 # 单条动态最多单独发送的配图数量（默认 9 张）
 max_separate_images: 9
 
+# 当动态有多张配图时，是否将图片上下拼接为一张长图发送（默认 true，避免群内多图刷屏，尽最大可能保留原图画质与分辨率）
+stitch_multi_images: true
+
 # 是否在动态卡片与消息最下方附带 opus 原链接（默认 false，不再附带长链接文本）
 show_dynamic_url: false

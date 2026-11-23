@@ -1,11 +1,17 @@
 import asyncio
 import base64
 from io import BytesIO
+import logging
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
 
 import httpx
 from PIL import Image, ImageDraw, ImageFont
+
+# 解除超大分辨率图片的像素限制（防止多张高清原图拼接时触发 DecompressionBombError）
+Image.MAX_IMAGE_PIXELS = None
+
+logger = logging.getLogger(__name__)
 
 
 # Bilibili 官方夜间模式深色中性色规范（完全不刺眼，质感沉浸高级）
@@ -78,26 +84,27 @@ def _tint_icon(filename: str, color: Tuple[int, int, int], size: int) -> Optiona
         return None
 
 
-async def _fetch_image(client: httpx.AsyncClient, url: str) -> Optional[Image.Image]:
+async def _fetch_image(client: httpx.AsyncClient, url: str, timeout: float = 15.0) -> Optional[Image.Image]:
     if not url or not isinstance(url, str):
         return None
     url = url.strip()
+    if "@" in url and ("hdslb.com" in url or "bilibili.com" in url):
+        url = url.split("@")[0]
     if url.startswith("//"):
         url = "https:" + url
     elif not url.startswith("http://") and not url.startswith("https://"):
         return None
     try:
-        response = await client.get(url, timeout=10.0, follow_redirects=True)
+        response = await client.get(url, timeout=timeout, follow_redirects=True)
         if response.status_code == 200 and "image" in response.headers.get("content-type", ""):
-            image = Image.open(BytesIO(response.content))
-            return image.convert("RGBA")
+            return Image.open(BytesIO(response.content))
     except Exception:
         pass
     return None
 
 
 def _crop_circle(img: Image.Image, size: int) -> Image.Image:
-    img = img.resize((size, size), Image.Resampling.LANCZOS)
+    img = img.resize((size, size), Image.Resampling.LANCZOS).convert("RGBA")
     mask = Image.new("L", (size, size), 0)
     draw = ImageDraw.Draw(mask)
     draw.ellipse((0, 0, size - 1, size - 1), fill=255)
@@ -108,6 +115,7 @@ def _crop_circle(img: Image.Image, size: int) -> Image.Image:
 
 def _round_corners(img: Image.Image, radius: int, border_color: Optional[Tuple[int, int, int]] = None) -> Image.Image:
     w, h = img.size
+    img = img.convert("RGBA")
     mask = Image.new("L", (w, h), 0)
     draw_mask = ImageDraw.Draw(mask)
     draw_mask.rounded_rectangle((0, 0, w - 1, h - 1), radius=radius, fill=255)
@@ -637,3 +645,104 @@ async def render_dynamic_card(
     buffer = BytesIO()
     card.convert("RGB").save(buffer, "PNG", optimize=True)
     return "base64://" + base64.b64encode(buffer.getvalue()).decode("ascii")
+
+
+def stitch_images(
+    images: List[Image.Image],
+    max_height: int = 60000,
+) -> Image.Image:
+    """
+    将多张图片按顺序自上而下拼接为一张长图。
+    - 尽最大可能保留原图画质与分辨率：
+      以所有图片中的最大宽度为统一画布基准宽度，较小宽度的图片使用高质量 LANCZOS 算法等比缩放。
+      若所有图片宽度相同，则实现 100% 原始像素 1:1 无损拼合。
+    - 保护机制：若拼接后总高度超过 JPEG 格式与主流即时通讯客户端安全上限（默认 60000 像素），
+      整体等比下采样至安全高度，避免文件损坏或客户端无法渲染。
+    """
+    if not images:
+        raise ValueError("没有可拼接的图片")
+    if len(images) == 1:
+        return images[0]
+
+    # 1. 确定目标宽度：以所有图片中的最大宽度为基准，避免压缩高分辨率大图
+    target_width = max(img.width for img in images)
+
+    # 2. 预处理各图片：若宽度不等于目标宽度，使用 LANCZOS 算法等比缩放；若相等则保持原图 1:1
+    scaled_images: List[Image.Image] = []
+    for img in images:
+        if img.width == target_width:
+            scaled_images.append(img)
+        else:
+            scale = target_width / img.width
+            new_height = max(1, int(round(img.height * scale)))
+            resized = img.resize((target_width, new_height), Image.Resampling.LANCZOS)
+            scaled_images.append(resized)
+
+    # 3. 计算拼接画布总高度
+    total_height = sum(img.height for img in scaled_images)
+
+    # 4. 超长图安全限制：若总高度超过上限，等比缩小整个画布尺寸
+    if total_height > max_height:
+        scale_down = max_height / total_height
+        target_width = max(1, int(round(target_width * scale_down)))
+        scaled_images = [
+            img.resize(
+                (target_width, max(1, int(round(img.height * scale_down)))),
+                Image.Resampling.LANCZOS,
+            )
+            for img in scaled_images
+        ]
+        total_height = sum(img.height for img in scaled_images)
+
+    # 5. 创建纯白底画布，自上而下顺序粘贴
+    canvas = Image.new("RGB", (target_width, total_height), (255, 255, 255))
+    current_y = 0
+    for img in scaled_images:
+        if img.mode == "RGBA":
+            canvas.paste(img, (0, current_y), mask=img.split()[3])
+        else:
+            canvas.paste(img.convert("RGB"), (0, current_y))
+        current_y += img.height
+
+    return canvas
+
+
+async def stitch_images_vertically(
+    client: httpx.AsyncClient,
+    image_urls: List[str],
+    max_height: int = 60000,
+) -> Optional[str]:
+    """
+    异步并发拉取多张图片并自上而下拼接为高质量长图，返回 base64:// 格式。
+    - 尽最大可能保留原图画质与分辨率：
+      自动剔除缩略图参数提取原图链接、最大宽度对齐、LANCZOS 缩放、JPEG quality=95、4:4:4 无子采样 (subsampling=0)。
+    - 若拼接长图体积超过 10MB（QQ/OneBot 单条传输保护），自动微调压缩质量确保能够成功发出。
+    - 若网络超时或获取失败，返回 None 以便降级回单张分开发送。
+    """
+    if not image_urls:
+        return None
+
+    # 并发下载图片
+    tasks = [_fetch_image(client, url) for url in image_urls]
+    raw_results = await asyncio.gather(*tasks, return_exceptions=True)
+    images: List[Image.Image] = [
+        res for res in raw_results
+        if isinstance(res, Image.Image)
+    ]
+    if not images:
+        return None
+
+    try:
+        stitched = stitch_images(images, max_height=max_height)
+        buffer = BytesIO()
+        stitched.save(buffer, format="JPEG", quality=95, subsampling=0)
+
+        # QQ / OneBot 消息体积保护（大于 10MB 时适度降至 85 保证发得出去）
+        if buffer.tell() > 10 * 1024 * 1024:
+            buffer = BytesIO()
+            stitched.save(buffer, format="JPEG", quality=85, subsampling=0)
+
+        return "base64://" + base64.b64encode(buffer.getvalue()).decode("ascii")
+    except Exception as exc:
+        logger.warning("多图拼接长图失败: %s", exc)
+        return None
